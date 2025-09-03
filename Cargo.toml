@@ -1,0 +1,31 @@
+[package]
+name = "apple-cryptokit-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["ChenZibo <qw.54@163.com>"]
+readme = "README.md"
+repository = "https://github.com/zibo-chen/apple-cryptokit-rs"
+homepage = "https://github.com/zibo-chen/apple-cryptokit-rs"
+license = "MIT"
+description = "A Rust wrapper around Apple's native CryptoKit framework for App Store compliant cryptography."
+keywords = ["cryptography", "apple", "cryptokit", "security", "macos"]
+categories = [
+    "cryptography",
+    "api-bindings",
+    "authentication",
+    "os::macos-apis",
+]
+rust-version = "1.70"
+
+[lib]
+name = "apple_cryptokit"
+path = "src/lib.rs"
+
+[dependencies]
+
+[build-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+hex = "0.4.3"
