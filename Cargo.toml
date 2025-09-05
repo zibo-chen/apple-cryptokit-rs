@@ -8,12 +8,13 @@ repository = "https://github.com/zibo-chen/apple-cryptokit-rs"
 homepage = "https://github.com/zibo-chen/apple-cryptokit-rs"
 license = "MIT"
 description = "A Rust wrapper around Apple's native CryptoKit framework for App Store compliant cryptography."
-keywords = ["cryptography", "apple", "cryptokit", "security", "macos"]
+keywords = ["cryptography", "apple", "cryptokit", "security", "macos", "ios"]
 categories = [
     "cryptography",
     "api-bindings",
     "authentication",
     "os::macos-apis",
+    "os::ios-apis",
 ]
 rust-version = "1.70"
 
