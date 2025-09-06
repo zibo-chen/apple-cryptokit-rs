@@ -106,9 +106,15 @@ fn build_ios_cryptokit() {
     let profile = env::var("PROFILE").unwrap();
     let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
     let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    let target_triple = env::var("TARGET").unwrap_or_default();
+
+    println!("cargo:warning=Target env: '{}'", target_env);
+    println!("cargo:warning=Target triple: '{}'", target_triple);
+    println!("cargo:warning=Arch: '{}'", arch);
 
     // Determine iOS target based on architecture and environment
-    let target = if target_env == "sim" {
+    let is_simulator = target_env == "sim" || target_triple.contains("sim");
+    let target = if is_simulator {
         // iOS Simulator
         match arch.as_str() {
             "aarch64" => format!("{}-apple-ios{}-simulator", arch, IOS_TARGET_VERSION),
@@ -122,6 +128,8 @@ fn build_ios_cryptokit() {
             _ => panic!("Unsupported iOS device architecture: {}", arch),
         }
     };
+
+    println!("cargo:warning=Using Swift target: '{}'", target);
 
     let swift_target_info_str = Command::new("swift")
         .args(&["-target", &target, "-print-target-info"])
@@ -144,7 +152,7 @@ fn build_ios_cryptokit() {
     );
 
     // Get the appropriate SDK path
-    let sdk_name = if target_env == "sim" {
+    let sdk_name = if is_simulator {
         "iphonesimulator"
     } else {
         "iphoneos"
@@ -196,6 +204,7 @@ fn build_ios_cryptokit() {
             sdk_path,
             "-module-name",
             "cryptokit",
+            "-O",
             "-o",
             &output_lib,
         ])
@@ -216,6 +225,12 @@ fn build_ios_cryptokit() {
     // Link to our compiled static library
     println!("cargo:rustc-link-search=native={}", swift_scratch_path);
     println!("cargo:rustc-link-lib=static=cryptokit");
+
+    // Add framework linking for iOS
+    println!("cargo:rustc-link-lib=framework=Foundation");
+    println!("cargo:rustc-link-lib=framework=Security");
+    println!("cargo:rustc-link-lib=framework=CryptoKit");
+
     println!("cargo:rerun-if-changed=swift/Sources/*.swift");
     println!(
         "cargo:rustc-env=IPHONEOS_DEPLOYMENT_TARGET={}",
