@@ -13,6 +13,8 @@ use apple_cryptokit::{
     key_derivation::hkdf_sha256_derive,
     // Symmetric Encryption
     symmetric::aes::{aes_gcm_decrypt, aes_gcm_encrypt},
+    symmetric::chacha::{chacha20poly1305_encrypt, chacha20poly1305_decrypt, ChaChaKey, ChaChaPolyNonce, ChaChaPoly},
+    symmetric::AuthenticatedCipher,
 };
 
 fn main() -> Result<()> {
@@ -25,10 +27,13 @@ fn main() -> Result<()> {
     // 2. Message Authentication Examples
     authentication_examples()?;
 
-    // 3. Symmetric Encryption Examples
+    // 3. Symmetric Encryption Examples (AES-GCM)
     symmetric_encryption_examples()?;
 
-    // 4. Key Derivation Examples
+    // 4. ChaCha20-Poly1305 Examples
+    chacha20poly1305_examples()?;
+
+    // 5. Key Derivation Examples
     key_derivation_examples()?;
 
     println!("\nAll examples completed successfully!");
@@ -105,6 +110,46 @@ fn symmetric_encryption_examples() -> Result<()> {
     println!(
         "Ciphertext length: {} bytes (including authentication tag)\n",
         ciphertext.len()
+    );
+
+    Ok(())
+}
+
+/// Demonstrates ChaCha20-Poly1305 authenticated encryption
+fn chacha20poly1305_examples() -> Result<()> {
+    println!("ChaCha20-Poly1305 Examples");
+    println!("-----------------------------");
+
+    // Using convenience functions
+    let key = b"0123456789abcdef0123456789abcdef"; // 32-byte key
+    let nonce = b"unique12byte"; // 12-byte nonce
+    let plaintext = b"Hello, ChaCha20-Poly1305!";
+
+    let ciphertext = chacha20poly1305_encrypt(key, nonce, plaintext)?;
+    println!("Plaintext: {}", String::from_utf8_lossy(plaintext));
+    println!("Ciphertext: {:02x?}...", &ciphertext[..16]);
+
+    let decrypted = chacha20poly1305_decrypt(key, nonce, &ciphertext)?;
+    println!("Decrypted: {}", String::from_utf8_lossy(&decrypted));
+
+    let success = plaintext == decrypted.as_slice();
+    println!(
+        "Encryption/Decryption: {}",
+        if success { "Success" } else { "Failed" }
+    );
+
+    // Using typed structs with random key generation
+    let random_key = ChaChaKey::generate()?;
+    let random_nonce = ChaChaPolyNonce::generate()?;
+    let message = b"Secure message with generated key";
+
+    let sealed = ChaChaPoly::seal(&random_key, &random_nonce, message)?;
+    let opened = ChaChaPoly::open(&random_key, &random_nonce, &sealed)?;
+
+    println!("Random key generation: Success");
+    println!(
+        "Seal/Open with generated key: {}\n",
+        if message == opened.as_slice() { "Success" } else { "Failed" }
     );
 
     Ok(())
