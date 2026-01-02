@@ -49,8 +49,10 @@ fn build_mac_cryptokit() {
     let swift_target_info: SwiftTarget = serde_json::from_slice(&swift_target_info_str)
         .inspect_err(|e| eprint!("{}", e))
         .unwrap();
-
-    // Handle RPath if required by the Swift libraries
+  
+  
+    // Note: With Swift 6.x, libraries_require_rpath is often true even for newer macOS versions.
+    // Since we're building a static library, we can proceed and add rpath if needed.
     if swift_target_info.target.libraries_require_rpath {
         println!(
             "cargo:warning=Swift libraries require RPath for target {}",
@@ -61,7 +63,7 @@ fn build_mac_cryptokit() {
             println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path);
         }
     }
-
+      
     let arch_rs = if arch == "aarch64" {
         // :HACK: swift arch vs rust arch
         "arm64".to_string()
