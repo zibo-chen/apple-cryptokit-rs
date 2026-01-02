@@ -51,6 +51,10 @@ impl Sha256 {
 
     /// 完成哈希计算并返回结果
     pub fn finalize(self) -> [u8; 32] {
+        self.snapshot()
+    }
+
+    pub fn snapshot(&self) -> [u8; 32] {
         let mut hash = [0u8; 32];
         unsafe {
             swift_sha256_finalize(self.ptr, hash.as_mut_ptr());
