@@ -3,7 +3,7 @@
 use super::HashFunction;
 
 // SHA-1 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha1_hash"]
     fn swift_sha1_hash(data: *const u8, length: i32, out_hash: *mut u8);
 }

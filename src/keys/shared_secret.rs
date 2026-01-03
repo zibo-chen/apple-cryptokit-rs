@@ -2,7 +2,7 @@ use crate::error::{CryptoKitError, Result};
 use crate::keys::symmetric::{SymmetricKey, SymmetricKeySize};
 
 // 共享密钥 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "shared_secret_hkdf_derive_key"]
     fn swift_shared_secret_hkdf_derive_key(
         secret: *const u8,

@@ -378,7 +378,7 @@ const MLDSA87_PRIVATE_KEY_SIZE: usize = 4896;
 const MLDSA87_SIGNATURE_SIZE: usize = 4627; // 最大签名长度
 
 // Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     // ML-DSA65
     fn swift_mldsa65_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;
     fn swift_mldsa65_sign(

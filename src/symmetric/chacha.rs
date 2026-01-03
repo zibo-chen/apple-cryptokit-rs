@@ -2,7 +2,7 @@ use crate::error::{CryptoKitError, Result};
 use crate::symmetric::AuthenticatedCipher;
 
 // ChaCha20-Poly1305 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "chacha20poly1305_encrypt"]
     fn swift_chacha20poly1305_encrypt(
         key: *const u8,

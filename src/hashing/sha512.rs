@@ -4,7 +4,7 @@ use super::HashFunction;
 use std::ffi::c_void;
 
 // SHA512 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha512_hash"]
     fn swift_sha512_hash(data: *const u8, length: i32, out_hash: *mut u8);
 

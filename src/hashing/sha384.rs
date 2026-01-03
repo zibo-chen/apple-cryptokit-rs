@@ -4,7 +4,7 @@ use super::HashFunction;
 use std::ffi::c_void;
 
 // SHA384 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha384_hash"]
     fn swift_sha384_hash(data: *const u8, length: i32, out_hash: *mut u8);
 
