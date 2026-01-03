@@ -27,6 +27,8 @@ pub enum CryptoKitError {
     InvalidLength,
     /// Swift FFI调用错误
     SwiftCallFailed,
+    /// Output Buffer Too Small,
+    OutputBufferTooSmall(usize, usize),
 }
 
 impl std::fmt::Display for CryptoKitError {
@@ -45,6 +47,9 @@ impl std::fmt::Display for CryptoKitError {
             CryptoKitError::DerivationFailed => write!(f, "Key derivation failed"),
             CryptoKitError::InvalidLength => write!(f, "Invalid data length"),
             CryptoKitError::SwiftCallFailed => write!(f, "Swift FFI call failed"),
+            CryptoKitError::OutputBufferTooSmall(input_size, required_output_size) => {
+                write!(f, "Provided output buffer was too small. Require {required_output_size} bytes for input of length {input_size}.")
+            }
         }
     }
 }

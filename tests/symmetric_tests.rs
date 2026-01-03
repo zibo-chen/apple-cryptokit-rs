@@ -1,12 +1,17 @@
 use apple_cryptokit::symmetric::*;
 use apple_cryptokit::{
-    AESGCMNonce, AESKey, AESKeySize, AesGcm, ChaChaKey, ChaChaPoly, ChaChaPolyNonce,
     aes_gcm_decrypt, aes_gcm_decrypt_with_aad, aes_gcm_encrypt, aes_gcm_encrypt_with_aad,
     chacha20poly1305_decrypt, chacha20poly1305_decrypt_with_aad, chacha20poly1305_encrypt,
-    chacha20poly1305_encrypt_with_aad,
+    chacha20poly1305_encrypt_with_aad, AESGCMNonce, AESKey, AESKeySize, AesGcm, ChaChaKey,
+    ChaChaPoly, ChaChaPolyNonce,
 };
 
 mod aes_gcm_tests {
+    use apple_cryptokit::symmetric::aes::{
+        aes_gcm_decrypt_to, aes_gcm_decrypt_to_with_aad, aes_gcm_encrypt_to,
+        aes_gcm_encrypt_to_with_aad,
+    };
+
     use super::*;
 
     #[test]
@@ -80,6 +85,34 @@ mod aes_gcm_tests {
     }
 
     #[test]
+    fn test_aes_gcm_encrypt_decrypt_to_trait() {
+        let key = AESKey::from_bytes(&vec![0u8; 32]).unwrap();
+        let nonce = AESGCMNonce::from_bytes(&vec![0u8; 12]).unwrap();
+        let plaintext = b"Hello, World! This is a test message for AES-GCM.";
+
+        // 测试加密
+        let mut ciphertext: [u8; 128] = [0u8; 128];
+        let ciphertext_len = AesGcm::seal_to(&key, &nonce, plaintext, ciphertext.as_mut_slice());
+        println!("AES-GCM encryption result: {:?}", ciphertext_len.is_ok());
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            // 测试解密
+            let mut plaintext_out = [0u8; 128];
+            let plaintext_out_len = AesGcm::open_to(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                plaintext_out.as_mut_slice(),
+            );
+            println!("AES-GCM decryption result: {:?}", plaintext_out_len.is_ok());
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
+            }
+        }
+    }
+
+    #[test]
     fn test_aes_gcm_encrypt_decrypt_with_aad() {
         let key = AESKey::from_bytes(&vec![0u8; 32]).unwrap();
         let nonce = AESGCMNonce::from_bytes(&vec![0u8; 12]).unwrap();
@@ -103,6 +136,43 @@ mod aes_gcm_tests {
 
             if let Ok(decrypted_text) = decrypted {
                 assert_eq!(plaintext, decrypted_text.as_slice());
+            }
+        }
+    }
+
+    #[test]
+    fn test_aes_gcm_encrypt_decrypt_to_with_aad() {
+        let key = AESKey::from_bytes(&vec![0u8; 32]).unwrap();
+        let nonce = AESGCMNonce::from_bytes(&vec![0u8; 12]).unwrap();
+        let plaintext = b"Hello, World!";
+        let aad = b"additional authenticated data";
+
+        // 测试带 AAD 的加密
+        let mut ciphertext = [0u8; 128];
+        let ciphertext_len =
+            AesGcm::seal_to_with_aad(&key, &nonce, plaintext, aad, ciphertext.as_mut_slice());
+        println!(
+            "AES-GCM with AAD encryption result: {:?}",
+            ciphertext_len.is_ok()
+        );
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            let mut plaintext_out = [0u8; 128];
+            // 测试带 AAD 的解密
+            let plaintext_out_len = AesGcm::open_to_with_aad(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                aad,
+                plaintext_out.as_mut_slice(),
+            );
+            println!(
+                "AES-GCM with AAD decryption result: {:?}",
+                plaintext_out_len.is_ok()
+            );
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
             }
         }
     }
@@ -135,6 +205,40 @@ mod aes_gcm_tests {
     }
 
     #[test]
+    fn test_aes_gcm_convenience_functions_to() {
+        let key = vec![0u8; 32];
+        let nonce = vec![0u8; 12];
+        let plaintext = b"Test message for convenience functions";
+
+        // 测试便利函数加密
+        let mut ciphertext = [0u8; 128];
+        let ciphertext_len = aes_gcm_encrypt_to(&key, &nonce, plaintext, ciphertext.as_mut_slice());
+        println!(
+            "AES-GCM convenience encrypt result: {:?}",
+            ciphertext_len.is_ok()
+        );
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            let mut plaintext_out = [0u8; 128];
+            // 测试便利函数解密
+            let plaintext_out_len = aes_gcm_decrypt_to(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                plaintext_out.as_mut_slice(),
+            );
+            println!(
+                "AES-GCM convenience decrypt result: {:?}",
+                plaintext_out_len.is_ok()
+            );
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
+            }
+        }
+    }
+
+    #[test]
     fn test_aes_gcm_convenience_functions_with_aad() {
         let key = vec![0u8; 32];
         let nonce = vec![0u8; 12];
@@ -161,9 +265,51 @@ mod aes_gcm_tests {
             }
         }
     }
+
+    #[test]
+    fn test_aes_gcm_convenience_functions_to_with_aad() {
+        let key = vec![0u8; 32];
+        let nonce = vec![0u8; 12];
+        let plaintext = b"Test message";
+        let aad = b"test aad";
+
+        // 测试带 AAD 的便利函数加密
+        let mut ciphertext = [0u8; 128];
+        let ciphertext_len =
+            aes_gcm_encrypt_to_with_aad(&key, &nonce, plaintext, aad, ciphertext.as_mut_slice());
+        println!(
+            "AES-GCM convenience encrypt with AAD result: {:?}",
+            ciphertext_len.is_ok()
+        );
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            // 测试带 AAD 的便利函数解密
+            let mut plaintext_out = [0u8; 128];
+            let plaintext_out_len = aes_gcm_decrypt_to_with_aad(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                aad,
+                plaintext_out.as_mut_slice(),
+            );
+            println!(
+                "AES-GCM convenience decrypt with AAD result: {:?}",
+                plaintext_out_len.is_ok()
+            );
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
+            }
+        }
+    }
 }
 
 mod chacha20poly1305_tests {
+    use apple_cryptokit::symmetric::chacha::{
+        chacha20poly1305_decrypt_to, chacha20poly1305_decrypt_to_with_aad,
+        chacha20poly1305_encrypt_to, chacha20poly1305_encrypt_to_with_aad,
+    };
+
     use super::*;
 
     #[test]
@@ -232,6 +378,41 @@ mod chacha20poly1305_tests {
     }
 
     #[test]
+    fn test_chacha20poly1305_encrypt_decrypt_to_trait() {
+        let key = ChaChaKey::from_bytes(&vec![0u8; 32]).unwrap();
+        let nonce = ChaChaPolyNonce::from_bytes(&vec![0u8; 12]).unwrap();
+        let plaintext = b"Hello, World! This is a test message for ChaCha20-Poly1305.";
+
+        // 测试加密
+        let mut ciphertext = [0u8; 128];
+        let ciphertext_len =
+            ChaChaPoly::seal_to(&key, &nonce, plaintext, ciphertext.as_mut_slice());
+        println!(
+            "ChaCha20-Poly1305 encryption result: {:?}",
+            ciphertext_len.is_ok()
+        );
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            // 测试解密
+            let mut plaintext_out = [0u8; 128];
+            let plaintext_out_len = ChaChaPoly::open_to(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                plaintext_out.as_mut_slice(),
+            );
+            println!(
+                "ChaCha20-Poly1305 decryption result: {:?}",
+                plaintext_out_len.is_ok()
+            );
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
+            }
+        }
+    }
+
+    #[test]
     fn test_chacha20poly1305_encrypt_decrypt_with_aad() {
         let key = ChaChaKey::from_bytes(&vec![0u8; 32]).unwrap();
         let nonce = ChaChaPolyNonce::from_bytes(&vec![0u8; 12]).unwrap();
@@ -255,6 +436,43 @@ mod chacha20poly1305_tests {
 
             if let Ok(decrypted_text) = decrypted {
                 assert_eq!(plaintext, decrypted_text.as_slice());
+            }
+        }
+    }
+
+    #[test]
+    fn test_chacha20poly1305_encrypt_decrypt_to_with_aad() {
+        let key = ChaChaKey::from_bytes(&vec![0u8; 32]).unwrap();
+        let nonce = ChaChaPolyNonce::from_bytes(&vec![0u8; 12]).unwrap();
+        let plaintext = b"Hello, World!";
+        let aad = b"additional authenticated data";
+
+        // 测试带 AAD 的加密
+        let mut ciphertext: [u8; 128] = [0u8; 128];
+        let ciphertext_len =
+            ChaChaPoly::seal_to_with_aad(&key, &nonce, plaintext, aad, ciphertext.as_mut_slice());
+        println!(
+            "ChaCha20-Poly1305 with AAD encryption result: {:?}",
+            ciphertext_len.is_ok()
+        );
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            // 测试带 AAD 的解密
+            let mut plaintext_out = [0u8; 128];
+            let plaintext_out_len = ChaChaPoly::open_to_with_aad(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                aad,
+                plaintext_out.as_mut_slice(),
+            );
+            println!(
+                "ChaCha20-Poly1305 with AAD decryption result: {:?}",
+                plaintext_out_len.is_ok()
+            );
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
             }
         }
     }
@@ -287,6 +505,41 @@ mod chacha20poly1305_tests {
     }
 
     #[test]
+    fn test_chacha20poly1305_convenience_functions_to() {
+        let key = vec![0u8; 32];
+        let nonce = vec![0u8; 12];
+        let plaintext = b"Test message for convenience functions";
+
+        // 测试便利函数加密
+        let mut ciphertext = [0u8; 128];
+        let ciphertext_len =
+            chacha20poly1305_encrypt_to(&key, &nonce, plaintext, ciphertext.as_mut_slice());
+        println!(
+            "ChaCha20-Poly1305 convenience encrypt result: {:?}",
+            ciphertext_len.is_ok()
+        );
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            // 测试便利函数解密
+            let mut plaintext_out = [0u8; 128];
+            let plaintext_out_len = chacha20poly1305_decrypt_to(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                plaintext_out.as_mut_slice(),
+            );
+            println!(
+                "ChaCha20-Poly1305 convenience decrypt result: {:?}",
+                plaintext_out_len.is_ok()
+            );
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
+            }
+        }
+    }
+
+    #[test]
     fn test_chacha20poly1305_convenience_functions_with_aad() {
         let key = vec![0u8; 32];
         let nonce = vec![0u8; 12];
@@ -310,6 +563,48 @@ mod chacha20poly1305_tests {
 
             if let Ok(decrypted_text) = decrypted {
                 assert_eq!(plaintext, decrypted_text.as_slice());
+            }
+        }
+    }
+
+    #[test]
+    fn test_chacha20poly1305_convenience_functions_to_with_aad() {
+        let key = vec![0u8; 32];
+        let nonce = vec![0u8; 12];
+        let plaintext = b"Test message";
+        let aad = b"test aad";
+
+        // 测试带 AAD 的便利函数加密
+        let mut ciphertext = [0u8; 128];
+        let ciphertext_len = chacha20poly1305_encrypt_to_with_aad(
+            &key,
+            &nonce,
+            plaintext,
+            aad,
+            ciphertext.as_mut_slice(),
+        );
+        println!(
+            "ChaCha20-Poly1305 convenience encrypt with AAD result: {:?}",
+            ciphertext_len.is_ok()
+        );
+
+        if let Ok(ciphertext_len) = ciphertext_len {
+            // 测试带 AAD 的便利函数解密
+            let mut plaintext_out = [0u8; 128];
+            let plaintext_out_len = chacha20poly1305_decrypt_to_with_aad(
+                &key,
+                &nonce,
+                &ciphertext[0..ciphertext_len],
+                aad,
+                plaintext_out.as_mut_slice(),
+            );
+            println!(
+                "ChaCha20-Poly1305 convenience decrypt with AAD result: {:?}",
+                plaintext_out_len.is_ok()
+            );
+
+            if let Ok(plaintext_out_len) = plaintext_out_len {
+                assert_eq!(plaintext.as_slice(), &plaintext_out[0..plaintext_out_len]);
             }
         }
     }
