@@ -3,8 +3,8 @@ use crate::error::Result;
 pub mod aes;
 pub mod chacha;
 
-/// The cipher process may include authentication tags, so we allocate
-/// extra space for tags to accomodate this.
+/// The encryption process may add an authentication tag, so we allocate
+/// extra space for the tag.
 const MAX_TAG_LEN: usize = 16;
 
 /// 加密算法的通用trait
@@ -29,7 +29,7 @@ pub trait Cipher {
 
     /// 解密数据
     fn decrypt(key: &Self::Key, nonce: &Self::Nonce, ciphertext: &[u8]) -> Result<Vec<u8>> {
-        let mut plaintext = vec![0u8; ciphertext.len() + MAX_TAG_LEN];
+        let mut plaintext = vec![0u8; ciphertext.len()];
         let len = Self::decrypt_to(key, nonce, ciphertext, &mut plaintext)?;
         plaintext.truncate(len);
         Ok(plaintext)
@@ -65,7 +65,7 @@ pub trait AuthenticatedCipher {
 
     /// 验证并解密数据
     fn open(key: &Self::Key, nonce: &Self::Nonce, ciphertext: &[u8]) -> Result<Vec<u8>> {
-        let mut plaintext = vec![0u8; ciphertext.len() + MAX_TAG_LEN];
+        let mut plaintext = vec![0u8; ciphertext.len()];
         let len = Self::open_to(key, nonce, ciphertext, &mut plaintext)?;
         plaintext.truncate(len);
         Ok(plaintext)
@@ -106,7 +106,7 @@ pub trait AuthenticatedCipher {
         ciphertext: &[u8],
         aad: &[u8],
     ) -> Result<Vec<u8>> {
-        let mut plaintext = vec![0u8; ciphertext.len() + MAX_TAG_LEN];
+        let mut plaintext = vec![0u8; ciphertext.len()];
         let len = Self::open_to_with_aad(key, nonce, ciphertext, aad, &mut plaintext)?;
         plaintext.truncate(len);
         Ok(plaintext)
