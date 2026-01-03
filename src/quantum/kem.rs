@@ -549,7 +549,7 @@ const XWING_PRIVATE_KEY_SIZE: usize = 2432; // ML-KEM768 私钥 + X25519 私钥
 const XWING_CIPHERTEXT_SIZE: usize = 1120; // ML-KEM768 密文 + X25519 密文
 
 // Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     // ML-KEM768
     fn swift_mlkem768_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;
     fn swift_mlkem768_encapsulate(

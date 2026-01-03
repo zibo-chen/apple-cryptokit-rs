@@ -1,7 +1,7 @@
 use crate::error::{CryptoKitError, Result};
 
 // 对称密钥管理 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "symmetric_key_generate"]
     fn swift_symmetric_key_generate(size: i32, output: *mut u8) -> i32;
 

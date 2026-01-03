@@ -4,7 +4,7 @@ use super::HashFunction;
 use std::ffi::c_void;
 
 // SHA384 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha384_hash"]
     fn swift_sha384_hash(data: *const u8, length: i32, out_hash: *mut u8);
 
@@ -51,6 +51,10 @@ impl Sha384 {
 
     /// 完成哈希计算并返回结果
     pub fn finalize(self) -> [u8; 48] {
+        self.snapshot()
+    }
+
+    pub fn snapshot(&self) -> [u8; 48] {
         let mut hash = [0u8; 48];
         unsafe {
             swift_sha384_finalize(self.ptr, hash.as_mut_ptr());

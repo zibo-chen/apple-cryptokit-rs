@@ -166,7 +166,8 @@ public class Sha256Box {
     }
 
     func finalize() -> SHA256Digest {
-        return sha256.finalize()
+        var snapshot = sha256
+        return snapshot.finalize()
     }
 }
 
@@ -179,7 +180,8 @@ public class Sha384Box {
     }
 
     func finalize() -> SHA384Digest {
-        return sha384.finalize()
+        var snapshot = sha384
+        return snapshot.finalize()
     }
 }
 
@@ -192,6 +194,7 @@ public class Sha512Box {
     }
 
     func finalize() -> SHA512Digest {
-        return sha512.finalize()
+        var snapshot = sha512
+        return snapshot.finalize()
     }
 }

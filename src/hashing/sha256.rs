@@ -4,7 +4,7 @@ use super::HashFunction;
 use std::ffi::c_void;
 
 // SHA256 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha256_hash"]
     fn swift_sha256_hash(data: *const u8, length: i32, out_hash: *mut u8);
 
@@ -51,6 +51,10 @@ impl Sha256 {
 
     /// 完成哈希计算并返回结果
     pub fn finalize(self) -> [u8; 32] {
+        self.snapshot()
+    }
+
+    pub fn snapshot(&self) -> [u8; 32] {
         let mut hash = [0u8; 32];
         unsafe {
             swift_sha256_finalize(self.ptr, hash.as_mut_ptr());

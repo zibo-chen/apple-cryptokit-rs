@@ -2,7 +2,7 @@ use super::KeyDerivationFunction;
 use crate::error::{CryptoKitError, Result};
 
 // HKDF-SHA512 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     #[link_name = "hkdf_sha512_derive"]
     fn swift_hkdf_sha512_derive(
         input_key: *const u8,

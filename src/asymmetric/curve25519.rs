@@ -2,7 +2,7 @@ use crate::asymmetric::{KeyAgreement, SignatureAlgorithm};
 use crate::error::{CryptoKitError, Result};
 
 // Curve25519 相关的 Swift FFI 声明
-unsafe extern "C" {
+extern "C" {
     fn swift_ed25519_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;
     fn swift_ed25519_sign(
         private_key: *const u8,
