@@ -18,9 +18,9 @@ pub trait HMAC {
     /// - `output`: Must be at least `OUTPUT_SIZE` bytes
     ///
     /// # Returns
-    /// - `Ok(())`: Success
+    /// - `Ok(usize)`: Number of bytes written
     /// - `Err`: Authentication failed
-    fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()>;
+    fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<usize>;
 
     /// Get output size (deprecated, use OUTPUT_SIZE constant instead)
     fn output_size() -> usize {
@@ -89,7 +89,10 @@ impl HmacAlgorithm {
     ///
     /// # Parameters
     /// - `output`: Must be at least `output_size()` bytes
-    pub fn compute_to(&self, key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+    ///
+    /// # Returns
+    /// Number of bytes written to output
+    pub fn compute_to(&self, key: &[u8], data: &[u8], output: &mut [u8]) -> Result<usize> {
         assert!(
             output.len() >= self.output_size(),
             "Output buffer too small: {} < {}",
@@ -153,7 +156,10 @@ impl HmacBuilder {
     }
 
     /// Calculate HMAC to the provided buffer (zero-allocation)
-    pub fn compute_to(&self, data: &[u8], output: &mut [u8]) -> Result<()> {
+    ///
+    /// # Returns
+    /// Number of bytes written to output
+    pub fn compute_to(&self, data: &[u8], output: &mut [u8]) -> Result<usize> {
         if self.key.is_empty() {
             return Err(CryptoKitError::InvalidKey);
         }

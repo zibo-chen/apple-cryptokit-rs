@@ -160,12 +160,12 @@ impl AuthenticatedCipher for AesGcm {
         plaintext: &[u8],
         ciphertext: &mut [u8],
     ) -> Result<usize> {
-        if ciphertext.len() < plaintext.len() + 16 {
-            return Err(CryptoKitError::OutputBufferTooSmall(
-                plaintext.len(),
-                plaintext.len() + 16,
-            ));
-        }
+        assert!(
+            ciphertext.len() >= plaintext.len() + Self::TAG_SIZE,
+            "Output buffer too small: {} < {}",
+            ciphertext.len(),
+            plaintext.len() + Self::TAG_SIZE
+        );
 
         unsafe {
             let mut ciphertext_len: i32 = 0;
@@ -194,17 +194,17 @@ impl AuthenticatedCipher for AesGcm {
         ciphertext: &[u8],
         plaintext: &mut [u8],
     ) -> Result<usize> {
-        if ciphertext.len() < 16 {
+        if ciphertext.len() < Self::TAG_SIZE {
             return Err(CryptoKitError::InvalidInput(
                 "Ciphertext too short".to_string(),
             ));
         }
-        if plaintext.len() < ciphertext.len() - 16 {
-            return Err(CryptoKitError::OutputBufferTooSmall(
-                ciphertext.len(),
-                ciphertext.len() - 16,
-            ));
-        }
+        assert!(
+            plaintext.len() >= ciphertext.len() - Self::TAG_SIZE,
+            "Output buffer too small: {} < {}",
+            plaintext.len(),
+            ciphertext.len() - Self::TAG_SIZE
+        );
 
         unsafe {
             let mut plaintext_len = 0i32;
@@ -235,12 +235,12 @@ impl AuthenticatedCipher for AesGcm {
         aad: &[u8],
         ciphertext: &mut [u8],
     ) -> Result<usize> {
-        if ciphertext.len() < plaintext.len() + 16 {
-            return Err(CryptoKitError::OutputBufferTooSmall(
-                plaintext.len(),
-                plaintext.len() + 16,
-            ));
-        }
+        assert!(
+            ciphertext.len() >= plaintext.len() + Self::TAG_SIZE,
+            "Output buffer too small: {} < {}",
+            ciphertext.len(),
+            plaintext.len() + Self::TAG_SIZE
+        );
 
         unsafe {
             let mut ciphertext_len = 0i32;
@@ -273,17 +273,17 @@ impl AuthenticatedCipher for AesGcm {
         aad: &[u8],
         plaintext: &mut [u8],
     ) -> Result<usize> {
-        if ciphertext.len() < 16 {
+        if ciphertext.len() < Self::TAG_SIZE {
             return Err(CryptoKitError::InvalidInput(
                 "Ciphertext too short".to_string(),
             ));
         }
-        if plaintext.len() < ciphertext.len() - 16 {
-            return Err(CryptoKitError::OutputBufferTooSmall(
-                ciphertext.len(),
-                ciphertext.len() - 16,
-            ));
-        }
+        assert!(
+            plaintext.len() >= ciphertext.len() - Self::TAG_SIZE,
+            "Output buffer too small: {} < {}",
+            plaintext.len(),
+            ciphertext.len() - Self::TAG_SIZE
+        );
 
         unsafe {
             let mut plaintext_len = 0i32;

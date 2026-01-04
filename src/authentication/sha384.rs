@@ -27,7 +27,10 @@ pub fn hmac_sha384(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA384_OUTPUT_SI
 ///
 /// # Parameters
 /// - `output`: Must be at least 48 bytes
-pub fn hmac_sha384_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+///
+/// # Returns
+/// Number of bytes written (always HMAC_SHA384_OUTPUT_SIZE)
+pub fn hmac_sha384_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<usize> {
     assert!(
         output.len() >= HMAC_SHA384_OUTPUT_SIZE,
         "Output buffer too small: {} < {}",
@@ -46,7 +49,7 @@ pub fn hmac_sha384_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> 
         if result < 0 {
             Err(CryptoKitError::SignatureFailed)
         } else {
-            Ok(())
+            Ok(HMAC_SHA384_OUTPUT_SIZE)
         }
     }
 }
@@ -57,7 +60,7 @@ pub struct HmacSha384;
 impl HMAC for HmacSha384 {
     const OUTPUT_SIZE: usize = HMAC_SHA384_OUTPUT_SIZE;
 
-    fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+    fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<usize> {
         hmac_sha384_to(key, data, output)
     }
 }

@@ -49,12 +49,15 @@ pub trait KeyDerivationFunction {
     ///
     /// # Parameters
     /// - `output`: Buffer whose length determines the length of the derived key
+    ///
+    /// # Returns
+    /// Number of bytes written (same as output.len())
     fn derive_to(
         input_key_material: &[u8],
         salt: &[u8],
         info: &[u8],
         output: &mut [u8],
-    ) -> Result<()>;
+    ) -> Result<usize>;
 }
 
 /// Generic HKDF implementation
@@ -133,13 +136,16 @@ impl HKDF {
     /// * `salt` - Optional salt value, recommended to use a random value
     /// * `info` - Optional context and application-specific information
     /// * `output` - Output buffer whose length determines the length of the derived key
+    ///
+    /// # Returns
+    /// Number of bytes written to output
     pub fn derive_key_to(
         algorithm: HashAlgorithm,
         input_key_material: &[u8],
         salt: &[u8],
         info: &[u8],
         output: &mut [u8],
-    ) -> Result<()> {
+    ) -> Result<usize> {
         // Validate input parameters
         if input_key_material.is_empty() {
             return Err(CryptoKitError::InvalidInput(

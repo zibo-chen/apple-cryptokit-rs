@@ -62,7 +62,7 @@ impl KeyDerivationFunction for HKDF_SHA384 {
         salt: &[u8],
         info: &[u8],
         output: &mut [u8],
-    ) -> Result<()> {
+    ) -> Result<usize> {
         if input_key_material.is_empty() {
             return Err(CryptoKitError::InvalidInput(
                 "Input key material cannot be empty".to_string(),
@@ -88,7 +88,7 @@ impl KeyDerivationFunction for HKDF_SHA384 {
             );
 
             if result == 0 {
-                Ok(())
+                Ok(output_length)
             } else {
                 Err(CryptoKitError::DerivationFailed)
             }
