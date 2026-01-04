@@ -39,7 +39,22 @@ pub trait KeyDerivationFunction {
         salt: &[u8],
         info: &[u8],
         output_length: usize,
-    ) -> Result<Vec<u8>>;
+    ) -> Result<Vec<u8>> {
+        let mut output = vec![0u8; output_length];
+        Self::derive_to(input_key_material, salt, info, &mut output)?;
+        Ok(output)
+    }
+
+    /// 从输入密钥材料派生密钥到提供的缓冲区（零分配）
+    ///
+    /// # 参数
+    /// - `output`: 缓冲区，其长度决定了派生密钥的长度
+    fn derive_to(
+        input_key_material: &[u8],
+        salt: &[u8],
+        info: &[u8],
+        output: &mut [u8],
+    ) -> Result<()>;
 }
 
 /// 通用HKDF实现
@@ -106,6 +121,46 @@ impl HKDF {
             }
             HashAlgorithm::SHA512 => {
                 hkdf_sha512::HKDF_SHA512::derive(input_key_material, salt, info, output_length)
+            }
+        }
+    }
+
+    /// 使用指定的哈希算法进行HKDF密钥派生到提供的缓冲区（零分配）
+    ///
+    /// # 参数
+    /// * `algorithm` - 使用的哈希算法
+    /// * `input_key_material` - 输入密钥材料（IKM）
+    /// * `salt` - 可选的盐值，建议使用随机值
+    /// * `info` - 可选的上下文和应用特定信息
+    /// * `output` - 输出缓冲区，其长度决定了派生密钥的长度
+    pub fn derive_key_to(
+        algorithm: HashAlgorithm,
+        input_key_material: &[u8],
+        salt: &[u8],
+        info: &[u8],
+        output: &mut [u8],
+    ) -> Result<()> {
+        // 验证输入参数
+        if input_key_material.is_empty() {
+            return Err(CryptoKitError::InvalidInput(
+                "Input key material cannot be empty".to_string(),
+            ));
+        }
+
+        let output_length = output.len();
+        if output_length == 0 || output_length > algorithm.max_hkdf_output_length() {
+            return Err(CryptoKitError::InvalidLength);
+        }
+
+        match algorithm {
+            HashAlgorithm::SHA256 => {
+                hkdf_sha256::HKDF_SHA256::derive_to(input_key_material, salt, info, output)
+            }
+            HashAlgorithm::SHA384 => {
+                hkdf_sha384::HKDF_SHA384::derive_to(input_key_material, salt, info, output)
+            }
+            HashAlgorithm::SHA512 => {
+                hkdf_sha512::HKDF_SHA512::derive_to(input_key_material, salt, info, output)
             }
         }
     }

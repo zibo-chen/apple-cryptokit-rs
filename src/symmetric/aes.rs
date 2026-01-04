@@ -151,6 +151,9 @@ impl AuthenticatedCipher for AesGcm {
     type Key = AESKey;
     type Nonce = AESGCMNonce;
 
+    /// AES-GCM 认证标签大小为 16 字节
+    const TAG_SIZE: usize = 16;
+
     fn seal_to(
         key: &Self::Key,
         nonce: &Self::Nonce,

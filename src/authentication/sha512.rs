@@ -18,8 +18,23 @@ pub const HMAC_SHA512_OUTPUT_SIZE: usize = 64;
 
 /// HMAC-SHA512 消息认证码
 pub fn hmac_sha512(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA512_OUTPUT_SIZE]> {
+    let mut output = [0u8; HMAC_SHA512_OUTPUT_SIZE];
+    hmac_sha512_to(key, data, &mut output)?;
+    Ok(output)
+}
+
+/// HMAC-SHA512 消息认证码到提供的缓冲区（零分配）
+///
+/// # 参数
+/// - `output`: 必须至少有 64 字节
+pub fn hmac_sha512_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+    assert!(
+        output.len() >= HMAC_SHA512_OUTPUT_SIZE,
+        "Output buffer too small: {} < {}",
+        output.len(),
+        HMAC_SHA512_OUTPUT_SIZE
+    );
     unsafe {
-        let mut output = [0u8; HMAC_SHA512_OUTPUT_SIZE];
         let result = swift_hmac_sha512(
             key.as_ptr(),
             key.len() as i32,
@@ -31,7 +46,7 @@ pub fn hmac_sha512(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA512_OUTPUT_SI
         if result < 0 {
             Err(CryptoKitError::SignatureFailed)
         } else {
-            Ok(output)
+            Ok(())
         }
     }
 }
@@ -40,14 +55,10 @@ pub fn hmac_sha512(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA512_OUTPUT_SI
 pub struct HmacSha512;
 
 impl HMAC for HmacSha512 {
-    type Output = [u8; HMAC_SHA512_OUTPUT_SIZE];
+    const OUTPUT_SIZE: usize = HMAC_SHA512_OUTPUT_SIZE;
 
-    fn authenticate(key: &[u8], data: &[u8]) -> Result<Self::Output> {
-        hmac_sha512(key, data)
-    }
-
-    fn output_size() -> usize {
-        HMAC_SHA512_OUTPUT_SIZE
+    fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+        hmac_sha512_to(key, data, output)
     }
 }
 

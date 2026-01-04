@@ -5,15 +5,15 @@ pub mod sha384;
 pub mod sha512;
 
 // Re-export public API
-pub use hmac::{HMAC, HmacAlgorithm, HmacBuilder, constant_time_eq, verify_hmac};
+pub use hmac::{constant_time_eq, verify_hmac, HmacAlgorithm, HmacBuilder, HMAC};
 
-pub use sha1::{HMAC_SHA1_OUTPUT_SIZE, HmacSha1, hmac_sha1};
+pub use sha1::{hmac_sha1, hmac_sha1_to, HmacSha1, HMAC_SHA1_OUTPUT_SIZE};
 
-pub use sha256::{HMAC_SHA256_OUTPUT_SIZE, HmacSha256, hmac_sha256};
+pub use sha256::{hmac_sha256, hmac_sha256_to, HmacSha256, HMAC_SHA256_OUTPUT_SIZE};
 
-pub use sha384::{HMAC_SHA384_OUTPUT_SIZE, HmacSha384, hmac_sha384};
+pub use sha384::{hmac_sha384, hmac_sha384_to, HmacSha384, HMAC_SHA384_OUTPUT_SIZE};
 
-pub use sha512::{HMAC_SHA512_OUTPUT_SIZE, HmacSha512, hmac_sha512};
+pub use sha512::{hmac_sha512, hmac_sha512_to, HmacSha512, HMAC_SHA512_OUTPUT_SIZE};
 
 #[cfg(test)]
 mod tests {
@@ -100,8 +100,8 @@ mod tests {
             .compute(data)
             .unwrap();
 
-        assert_eq!(direct_result.as_ref(), trait_result.as_ref());
-        assert_eq!(direct_result.as_ref(), &enum_result[..]);
-        assert_eq!(direct_result.as_ref(), &builder_result[..]);
+        assert_eq!(direct_result.as_ref() as &[u8], trait_result.as_slice());
+        assert_eq!(direct_result.as_ref() as &[u8], &enum_result[..]);
+        assert_eq!(direct_result.as_ref() as &[u8], &builder_result[..]);
     }
 }

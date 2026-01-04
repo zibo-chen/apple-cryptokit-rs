@@ -57,26 +57,25 @@ impl HKDF_SHA384 {
 }
 
 impl KeyDerivationFunction for HKDF_SHA384 {
-    fn derive(
+    fn derive_to(
         input_key_material: &[u8],
         salt: &[u8],
         info: &[u8],
-        output_length: usize,
-    ) -> Result<Vec<u8>> {
+        output: &mut [u8],
+    ) -> Result<()> {
         if input_key_material.is_empty() {
             return Err(CryptoKitError::InvalidInput(
                 "Input key material cannot be empty".to_string(),
             ));
         }
 
+        let output_length = output.len();
         if output_length == 0 || output_length > 255 * 48 {
             // SHA384输出48字节，最大255个输出块
             return Err(CryptoKitError::InvalidLength);
         }
 
         unsafe {
-            let mut output = vec![0u8; output_length];
-
             let result = swift_hkdf_sha384_derive(
                 input_key_material.as_ptr(),
                 input_key_material.len() as i32,
@@ -89,7 +88,7 @@ impl KeyDerivationFunction for HKDF_SHA384 {
             );
 
             if result == 0 {
-                Ok(output)
+                Ok(())
             } else {
                 Err(CryptoKitError::DerivationFailed)
             }

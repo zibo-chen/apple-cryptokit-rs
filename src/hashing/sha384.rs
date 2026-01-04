@@ -3,6 +3,9 @@
 use super::HashFunction;
 use std::ffi::c_void;
 
+/// SHA-384 输出大小
+pub const SHA384_OUTPUT_SIZE: usize = 48;
+
 // SHA384 Swift FFI 声明
 unsafe extern "C" {
     #[link_name = "sha384_hash"]
@@ -23,10 +26,27 @@ unsafe extern "C" {
 
 /// SHA384 一次性哈希计算
 pub fn sha384_hash(data: &[u8]) -> [u8; 48] {
+    let mut output = [0u8; 48];
+    sha384_hash_to(data, &mut output);
+    output
+}
+
+/// SHA384 哈希计算到提供的缓冲区（零分配）
+///
+/// # 参数
+/// - `output`: 必须至少有 48 字节
+///
+/// # Panics
+/// 如果 output 缓冲区太小会 panic
+pub fn sha384_hash_to(data: &[u8], output: &mut [u8]) {
+    assert!(
+        output.len() >= SHA384_OUTPUT_SIZE,
+        "Output buffer too small: {} < {}",
+        output.len(),
+        SHA384_OUTPUT_SIZE
+    );
     unsafe {
-        let mut output_hash = [0u8; 48];
-        swift_sha384_hash(data.as_ptr(), data.len() as i32, output_hash.as_mut_ptr());
-        output_hash
+        swift_sha384_hash(data.as_ptr(), data.len() as i32, output.as_mut_ptr());
     }
 }
 
@@ -77,10 +97,10 @@ impl Drop for Sha384 {
 pub struct SHA384;
 
 impl HashFunction for SHA384 {
-    type Output = [u8; 48];
+    const OUTPUT_SIZE: usize = SHA384_OUTPUT_SIZE;
 
-    fn hash(data: &[u8]) -> Self::Output {
-        sha384_hash(data)
+    fn hash_to(data: &[u8], output: &mut [u8]) {
+        sha384_hash_to(data, output)
     }
 }
 

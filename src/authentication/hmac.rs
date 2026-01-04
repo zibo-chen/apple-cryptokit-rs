@@ -2,13 +2,30 @@ use crate::error::{CryptoKitError, Result};
 
 /// HMAC 算法trait，为不同HMAC算法提供统一接口
 pub trait HMAC {
-    type Output;
+    /// HMAC 输出大小（字节）
+    const OUTPUT_SIZE: usize;
 
     /// 计算HMAC
-    fn authenticate(key: &[u8], data: &[u8]) -> Result<Self::Output>;
+    fn authenticate(key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
+        let mut output = vec![0u8; Self::OUTPUT_SIZE];
+        Self::authenticate_to(key, data, &mut output)?;
+        Ok(output)
+    }
 
-    /// 获取输出大小
-    fn output_size() -> usize;
+    /// 计算HMAC到提供的缓冲区（零分配）
+    ///
+    /// # 参数
+    /// - `output`: 必须至少有 `OUTPUT_SIZE` 字节
+    ///
+    /// # 返回
+    /// - `Ok(())`: 成功
+    /// - `Err`: 认证失败
+    fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()>;
+
+    /// 获取输出大小（弃用，使用 OUTPUT_SIZE 常量）
+    fn output_size() -> usize {
+        Self::OUTPUT_SIZE
+    }
 }
 
 /// 消息认证码验证
@@ -63,22 +80,38 @@ impl HmacAlgorithm {
 
     /// 计算HMAC
     pub fn compute(&self, key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
+        let mut output = vec![0u8; self.output_size()];
+        self.compute_to(key, data, &mut output)?;
+        Ok(output)
+    }
+
+    /// 计算HMAC到提供的缓冲区（零分配）
+    ///
+    /// # 参数
+    /// - `output`: 必须至少有 `output_size()` 字节
+    pub fn compute_to(&self, key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+        assert!(
+            output.len() >= self.output_size(),
+            "Output buffer too small: {} < {}",
+            output.len(),
+            self.output_size()
+        );
         match self {
             HmacAlgorithm::Sha1 => {
-                use crate::authentication::sha1::hmac_sha1;
-                Ok(hmac_sha1(key, data)?.to_vec())
+                use crate::authentication::sha1::hmac_sha1_to;
+                hmac_sha1_to(key, data, output)
             }
             HmacAlgorithm::Sha256 => {
-                use crate::authentication::sha256::hmac_sha256;
-                Ok(hmac_sha256(key, data)?.to_vec())
+                use crate::authentication::sha256::hmac_sha256_to;
+                hmac_sha256_to(key, data, output)
             }
             HmacAlgorithm::Sha384 => {
-                use crate::authentication::sha384::hmac_sha384;
-                Ok(hmac_sha384(key, data)?.to_vec())
+                use crate::authentication::sha384::hmac_sha384_to;
+                hmac_sha384_to(key, data, output)
             }
             HmacAlgorithm::Sha512 => {
-                use crate::authentication::sha512::hmac_sha512;
-                Ok(hmac_sha512(key, data)?.to_vec())
+                use crate::authentication::sha512::hmac_sha512_to;
+                hmac_sha512_to(key, data, output)
             }
         }
     }
@@ -119,9 +152,22 @@ impl HmacBuilder {
         self.algorithm.compute(&self.key, data)
     }
 
+    /// 计算HMAC到提供的缓冲区（零分配）
+    pub fn compute_to(&self, data: &[u8], output: &mut [u8]) -> Result<()> {
+        if self.key.is_empty() {
+            return Err(CryptoKitError::InvalidKey);
+        }
+        self.algorithm.compute_to(&self.key, data, output)
+    }
+
     /// 验证HMAC
     pub fn verify(&self, data: &[u8], expected_hmac: &[u8]) -> Result<bool> {
         let computed = self.compute(data)?;
         Ok(constant_time_eq(&computed, expected_hmac))
+    }
+
+    /// 获取输出大小
+    pub fn output_size(&self) -> usize {
+        self.algorithm.output_size()
     }
 }

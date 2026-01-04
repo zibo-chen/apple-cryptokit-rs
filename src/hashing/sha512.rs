@@ -3,6 +3,9 @@
 use super::HashFunction;
 use std::ffi::c_void;
 
+/// SHA-512 输出大小
+pub const SHA512_OUTPUT_SIZE: usize = 64;
+
 // SHA512 Swift FFI 声明
 unsafe extern "C" {
     #[link_name = "sha512_hash"]
@@ -23,10 +26,27 @@ unsafe extern "C" {
 
 /// SHA512 一次性哈希计算
 pub fn sha512_hash(data: &[u8]) -> [u8; 64] {
+    let mut output = [0u8; 64];
+    sha512_hash_to(data, &mut output);
+    output
+}
+
+/// SHA512 哈希计算到提供的缓冲区（零分配）
+///
+/// # 参数
+/// - `output`: 必须至少有 64 字节
+///
+/// # Panics
+/// 如果 output 缓冲区太小会 panic
+pub fn sha512_hash_to(data: &[u8], output: &mut [u8]) {
+    assert!(
+        output.len() >= SHA512_OUTPUT_SIZE,
+        "Output buffer too small: {} < {}",
+        output.len(),
+        SHA512_OUTPUT_SIZE
+    );
     unsafe {
-        let mut output_hash = [0u8; 64];
-        swift_sha512_hash(data.as_ptr(), data.len() as i32, output_hash.as_mut_ptr());
-        output_hash
+        swift_sha512_hash(data.as_ptr(), data.len() as i32, output.as_mut_ptr());
     }
 }
 
@@ -77,10 +97,10 @@ impl Drop for Sha512 {
 pub struct SHA512;
 
 impl HashFunction for SHA512 {
-    type Output = [u8; 64];
+    const OUTPUT_SIZE: usize = SHA512_OUTPUT_SIZE;
 
-    fn hash(data: &[u8]) -> Self::Output {
-        sha512_hash(data)
+    fn hash_to(data: &[u8], output: &mut [u8]) {
+        sha512_hash_to(data, output)
     }
 }
 

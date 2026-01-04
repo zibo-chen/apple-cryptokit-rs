@@ -198,7 +198,7 @@ mod consistency_tests {
         let builder = HashBuilder::new(HashAlgorithm::Sha256);
         let builder_result = builder.compute(data);
 
-        assert_eq!(direct, trait_result);
+        assert_eq!(direct.to_vec(), trait_result);
         assert_eq!(direct.to_vec(), enum_result);
         assert_eq!(direct.to_vec(), builder_result);
     }
