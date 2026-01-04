@@ -1,7 +1,7 @@
 use crate::error::{CryptoKitError, Result};
 use crate::symmetric::AuthenticatedCipher;
 
-// ChaCha20-Poly1305 Swift FFI 声明
+// ChaCha20-Poly1305 Swift FFI declarations
 extern "C" {
     #[link_name = "chacha20poly1305_encrypt"]
     fn swift_chacha20poly1305_encrypt(
@@ -62,14 +62,14 @@ extern "C" {
     fn swift_generate_chacha20poly1305_nonce(nonce_data: *mut u8) -> i32;
 }
 
-/// ChaCha20密钥 (32字节)
+/// ChaCha20 key (32 bytes)
 #[derive(Clone)]
 pub struct ChaChaKey {
     pub(crate) bytes: [u8; 32],
 }
 
 impl ChaChaKey {
-    /// 从字节数组创建ChaCha20密钥
+    /// Create ChaCha20 key from byte array
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != 32 {
             return Err(CryptoKitError::InvalidKey);
@@ -80,7 +80,7 @@ impl ChaChaKey {
         Ok(Self { bytes: key_bytes })
     }
 
-    /// 生成随机ChaCha20密钥
+    /// Generate random ChaCha20 key
     pub fn generate() -> Result<Self> {
         unsafe {
             let mut bytes = [0u8; 32];
@@ -94,20 +94,20 @@ impl ChaChaKey {
         }
     }
 
-    /// 获取密钥字节
+    /// Get key bytes
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 }
 
-/// ChaCha20-Poly1305 nonce (12字节)
+/// ChaCha20-Poly1305 nonce (12 bytes)
 #[derive(Clone)]
 pub struct ChaChaPolyNonce {
     pub(crate) bytes: [u8; 12],
 }
 
 impl ChaChaPolyNonce {
-    /// 从字节数组创建nonce
+    /// Create nonce from byte array
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != 12 {
             return Err(CryptoKitError::InvalidNonce);
@@ -118,7 +118,7 @@ impl ChaChaPolyNonce {
         Ok(Self { bytes: nonce_bytes })
     }
 
-    /// 生成随机nonce
+    /// Generate random nonce
     pub fn generate() -> Result<Self> {
         unsafe {
             let mut bytes = [0u8; 12];
@@ -132,22 +132,36 @@ impl ChaChaPolyNonce {
         }
     }
 
-    /// 获取nonce字节
+    /// Get nonce bytes
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 }
 
-/// ChaCha20-Poly1305 认证加密实现
+/// ChaCha20-Poly1305 authenticated encryption implementation
 pub struct ChaChaPoly;
 
 impl AuthenticatedCipher for ChaChaPoly {
     type Key = ChaChaKey;
     type Nonce = ChaChaPolyNonce;
 
-    fn seal(key: &Self::Key, nonce: &Self::Nonce, plaintext: &[u8]) -> Result<Vec<u8>> {
+    /// ChaCha20-Poly1305 authentication tag size is 16 bytes
+    const TAG_SIZE: usize = 16;
+
+    fn seal_to(
+        key: &Self::Key,
+        nonce: &Self::Nonce,
+        plaintext: &[u8],
+        ciphertext: &mut [u8],
+    ) -> Result<usize> {
+        if ciphertext.len() < plaintext.len() + 16 {
+            return Err(CryptoKitError::OutputBufferTooSmall(
+                plaintext.len(),
+                plaintext.len() + 16,
+            ));
+        }
+
         unsafe {
-            let mut ciphertext = vec![0u8; plaintext.len() + 16]; // plaintext + tag
             let mut ciphertext_len = 0i32;
 
             let result = swift_chacha20poly1305_encrypt(
@@ -162,23 +176,32 @@ impl AuthenticatedCipher for ChaChaPoly {
             );
 
             if result == 0 {
-                ciphertext.resize(ciphertext_len as usize, 0);
-                Ok(ciphertext)
+                Ok(ciphertext_len as usize)
             } else {
                 Err(CryptoKitError::EncryptionFailed)
             }
         }
     }
 
-    fn open(key: &Self::Key, nonce: &Self::Nonce, ciphertext: &[u8]) -> Result<Vec<u8>> {
+    fn open_to(
+        key: &Self::Key,
+        nonce: &Self::Nonce,
+        ciphertext: &[u8],
+        plaintext: &mut [u8],
+    ) -> Result<usize> {
         if ciphertext.len() < 16 {
             return Err(CryptoKitError::InvalidInput(
                 "Ciphertext too short".to_string(),
             ));
         }
+        if plaintext.len() < ciphertext.len() - 16 {
+            return Err(CryptoKitError::OutputBufferTooSmall(
+                ciphertext.len(),
+                ciphertext.len() - 16,
+            ));
+        }
 
         unsafe {
-            let mut plaintext = vec![0u8; ciphertext.len()];
             let mut plaintext_len = 0i32;
 
             let result = swift_chacha20poly1305_decrypt(
@@ -193,22 +216,28 @@ impl AuthenticatedCipher for ChaChaPoly {
             );
 
             if result == 0 {
-                plaintext.resize(plaintext_len as usize, 0);
-                Ok(plaintext)
+                Ok(plaintext_len as usize)
             } else {
                 Err(CryptoKitError::DecryptionFailed)
             }
         }
     }
 
-    fn seal_with_aad(
+    fn seal_to_with_aad(
         key: &Self::Key,
         nonce: &Self::Nonce,
         plaintext: &[u8],
         aad: &[u8],
-    ) -> Result<Vec<u8>> {
+        ciphertext: &mut [u8],
+    ) -> Result<usize> {
+        if ciphertext.len() < plaintext.len() + 16 {
+            return Err(CryptoKitError::OutputBufferTooSmall(
+                plaintext.len(),
+                plaintext.len() + 16,
+            ));
+        }
+
         unsafe {
-            let mut ciphertext = vec![0u8; plaintext.len() + 16];
             let mut ciphertext_len = 0i32;
 
             let result = swift_chacha20poly1305_encrypt_with_aad(
@@ -225,28 +254,33 @@ impl AuthenticatedCipher for ChaChaPoly {
             );
 
             if result == 0 {
-                ciphertext.resize(ciphertext_len as usize, 0);
-                Ok(ciphertext)
+                Ok(ciphertext_len as usize)
             } else {
                 Err(CryptoKitError::EncryptionFailed)
             }
         }
     }
 
-    fn open_with_aad(
+    fn open_to_with_aad(
         key: &Self::Key,
         nonce: &Self::Nonce,
         ciphertext: &[u8],
         aad: &[u8],
-    ) -> Result<Vec<u8>> {
+        plaintext: &mut [u8],
+    ) -> Result<usize> {
         if ciphertext.len() < 16 {
             return Err(CryptoKitError::InvalidInput(
                 "Ciphertext too short".to_string(),
             ));
         }
+        if plaintext.len() < ciphertext.len() - 16 {
+            return Err(CryptoKitError::OutputBufferTooSmall(
+                ciphertext.len(),
+                ciphertext.len() - 16,
+            ));
+        }
 
         unsafe {
-            let mut plaintext = vec![0u8; ciphertext.len()];
             let mut plaintext_len = 0i32;
 
             let result = swift_chacha20poly1305_decrypt_with_aad(
@@ -263,8 +297,7 @@ impl AuthenticatedCipher for ChaChaPoly {
             );
 
             if result == 0 {
-                plaintext.resize(plaintext_len as usize, 0);
-                Ok(plaintext)
+                Ok(plaintext_len as usize)
             } else {
                 Err(CryptoKitError::DecryptionFailed)
             }
@@ -272,21 +305,41 @@ impl AuthenticatedCipher for ChaChaPoly {
     }
 }
 
-/// 便利函数：ChaCha20-Poly1305 加密
+/// Convenience function: ChaCha20-Poly1305 encryption
 pub fn chacha20poly1305_encrypt(key: &[u8], nonce: &[u8], plaintext: &[u8]) -> Result<Vec<u8>> {
     let key = ChaChaKey::from_bytes(key)?;
     let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
     ChaChaPoly::seal(&key, &nonce, plaintext)
 }
+pub fn chacha20poly1305_encrypt_to(
+    key: &[u8],
+    nonce: &[u8],
+    plaintext: &[u8],
+    ciphertext: &mut [u8],
+) -> Result<usize> {
+    let key = ChaChaKey::from_bytes(key)?;
+    let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
+    ChaChaPoly::seal_to(&key, &nonce, plaintext, ciphertext)
+}
 
-/// 便利函数：ChaCha20-Poly1305 解密
+/// Convenience function: ChaCha20-Poly1305 decryption
 pub fn chacha20poly1305_decrypt(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
     let key = ChaChaKey::from_bytes(key)?;
     let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
     ChaChaPoly::open(&key, &nonce, ciphertext)
 }
+pub fn chacha20poly1305_decrypt_to(
+    key: &[u8],
+    nonce: &[u8],
+    ciphertext: &[u8],
+    plaintext: &mut [u8],
+) -> Result<usize> {
+    let key = ChaChaKey::from_bytes(key)?;
+    let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
+    ChaChaPoly::open_to(&key, &nonce, ciphertext, plaintext)
+}
 
-/// 便利函数：ChaCha20-Poly1305 带AAD加密
+/// Convenience function: ChaCha20-Poly1305 encryption with AAD
 pub fn chacha20poly1305_encrypt_with_aad(
     key: &[u8],
     nonce: &[u8],
@@ -297,8 +350,19 @@ pub fn chacha20poly1305_encrypt_with_aad(
     let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
     ChaChaPoly::seal_with_aad(&key, &nonce, plaintext, aad)
 }
+pub fn chacha20poly1305_encrypt_to_with_aad(
+    key: &[u8],
+    nonce: &[u8],
+    plaintext: &[u8],
+    aad: &[u8],
+    ciphertext: &mut [u8],
+) -> Result<usize> {
+    let key = ChaChaKey::from_bytes(key)?;
+    let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
+    ChaChaPoly::seal_to_with_aad(&key, &nonce, plaintext, aad, ciphertext)
+}
 
-/// 便利函数：ChaCha20-Poly1305 带AAD解密
+/// Convenience function: ChaCha20-Poly1305 decryption with AAD
 pub fn chacha20poly1305_decrypt_with_aad(
     key: &[u8],
     nonce: &[u8],
@@ -308,4 +372,15 @@ pub fn chacha20poly1305_decrypt_with_aad(
     let key = ChaChaKey::from_bytes(key)?;
     let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
     ChaChaPoly::open_with_aad(&key, &nonce, ciphertext, aad)
+}
+pub fn chacha20poly1305_decrypt_to_with_aad(
+    key: &[u8],
+    nonce: &[u8],
+    ciphertext: &[u8],
+    aad: &[u8],
+    plaintext: &mut [u8],
+) -> Result<usize> {
+    let key = ChaChaKey::from_bytes(key)?;
+    let nonce = ChaChaPolyNonce::from_bytes(nonce)?;
+    ChaChaPoly::open_to_with_aad(&key, &nonce, ciphertext, aad, plaintext)
 }

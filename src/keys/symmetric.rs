@@ -1,6 +1,6 @@
 use crate::error::{CryptoKitError, Result};
 
-// 对称密钥管理 Swift FFI 声明
+// Symmetric key management Swift FFI declarations
 extern "C" {
     #[link_name = "symmetric_key_generate"]
     fn swift_symmetric_key_generate(size: i32, output: *mut u8) -> i32;
@@ -9,21 +9,21 @@ extern "C" {
     fn swift_symmetric_key_from_data(data: *const u8, len: i32, output: *mut u8) -> i32;
 }
 
-/// 对称密钥大小枚举
+/// Symmetric key size enumeration
 ///
-/// 支持常用的对称密钥长度，与 Apple CryptoKit 的 SymmetricKeySize 对应
+/// Supports common symmetric key lengths, corresponding to Apple CryptoKit's SymmetricKeySize
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SymmetricKeySize {
-    /// 128位 (16字节) - 适用于 AES-128
+    /// 128-bit (16 bytes) - suitable for AES-128
     Bits128,
-    /// 192位 (24字节) - 适用于 AES-192  
+    /// 192-bit (24 bytes) - suitable for AES-192
     Bits192,
-    /// 256位 (32字节) - 适用于 AES-256, ChaCha20
+    /// 256-bit (32 bytes) - suitable for AES-256, ChaCha20
     Bits256,
 }
 
 impl SymmetricKeySize {
-    /// 获取密钥长度（字节）
+    /// Get key length (bytes)
     pub fn byte_count(&self) -> usize {
         match self {
             SymmetricKeySize::Bits128 => 16,
@@ -32,12 +32,12 @@ impl SymmetricKeySize {
         }
     }
 
-    /// 获取密钥长度（位）
+    /// Get key length (bits)
     pub fn bit_count(&self) -> usize {
         self.byte_count() * 8
     }
 
-    /// 从字节长度创建 SymmetricKeySize
+    /// Create SymmetricKeySize from byte count
     pub fn from_byte_count(bytes: usize) -> Result<Self> {
         match bytes {
             16 => Ok(SymmetricKeySize::Bits128),
@@ -47,7 +47,7 @@ impl SymmetricKeySize {
         }
     }
 
-    /// 从位长度创建 SymmetricKeySize
+    /// Create SymmetricKeySize from bit count
     pub fn from_bit_count(bits: usize) -> Result<Self> {
         match bits {
             128 => Ok(SymmetricKeySize::Bits128),
@@ -58,9 +58,9 @@ impl SymmetricKeySize {
     }
 }
 
-/// 对称密钥包装器
+/// Symmetric key wrapper
 ///
-/// 提供安全的对称密钥管理，与 Apple CryptoKit 的 SymmetricKey 对应
+/// Provides secure symmetric key management, corresponding to Apple CryptoKit's SymmetricKey
 #[derive(Clone)]
 pub struct SymmetricKey {
     bytes: Vec<u8>,
@@ -68,13 +68,13 @@ pub struct SymmetricKey {
 }
 
 impl SymmetricKey {
-    /// 生成指定大小的随机对称密钥
+    /// Generate a random symmetric key of the specified size
     ///
     /// # Arguments
-    /// * `size` - 密钥大小
+    /// * `size` - Key size
     ///
     /// # Returns
-    /// 新的随机对称密钥
+    /// New random symmetric key
     pub fn generate(size: SymmetricKeySize) -> Result<Self> {
         let byte_count = size.byte_count();
 
@@ -93,13 +93,13 @@ impl SymmetricKey {
         }
     }
 
-    /// 从字节数据创建对称密钥
+    /// Create symmetric key from byte data
     ///
     /// # Arguments
-    /// * `data` - 密钥数据字节
+    /// * `data` - Key data bytes
     ///
     /// # Returns
-    /// 新的对称密钥
+    /// New symmetric key
     pub fn from_data(data: &[u8]) -> Result<Self> {
         let size = SymmetricKeySize::from_byte_count(data.len())?;
 
@@ -122,51 +122,51 @@ impl SymmetricKey {
         }
     }
 
-    /// 获取密钥字节数据的引用
+    /// Get a reference to the key byte data
     ///
-    /// 注意：此方法返回密钥的原始字节，使用时需要格外小心避免泄露
+    /// Note: This method returns the raw bytes of the key, use with caution to avoid leakage
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 
-    /// 获取密钥大小枚举值
+    /// Get key size enumeration value
     pub fn size(&self) -> SymmetricKeySize {
         self.size
     }
 
-    /// 获取密钥长度（字节）
+    /// Get key length (bytes)
     pub fn byte_count(&self) -> usize {
         self.bytes.len()
     }
 
-    /// 获取密钥长度（位）
+    /// Get key length (bits)
     pub fn bit_count(&self) -> usize {
         self.bytes.len() * 8
     }
 
-    /// 安全地访问密钥字节数据
+    /// Securely access key byte data
     ///
-    /// 提供一个回调函数来访问密钥字节，类似于 Apple CryptoKit 的 withUnsafeBytes
+    /// Provides a callback function to access key bytes, similar to Apple CryptoKit's withUnsafeBytes
     ///
     /// # Arguments
-    /// * `callback` - 处理密钥字节的回调函数
+    /// * `callback` - Callback function to process key bytes
     pub fn with_unsafe_bytes<F, R>(&self, callback: F) -> Result<R>
     where
         F: FnOnce(&[u8]) -> R,
     {
-        // 直接调用回调函数，因为我们已经有了字节数据
+        // Directly call the callback function since we already have the byte data
         Ok(callback(&self.bytes))
     }
 
-    /// 比较两个密钥是否相等
+    /// Compare if two keys are equal
     ///
-    /// 使用常数时间比较避免时序攻击
+    /// Uses constant-time comparison to avoid timing attacks
     pub fn equals(&self, other: &Self) -> bool {
         if self.bytes.len() != other.bytes.len() {
             return false;
         }
 
-        // 常数时间比较
+        // Constant-time comparison
         let mut result = 0u8;
         for (a, b) in self.bytes.iter().zip(other.bytes.iter()) {
             result |= a ^ b;
@@ -188,21 +188,21 @@ impl std::fmt::Debug for SymmetricKey {
         f.debug_struct("SymmetricKey")
             .field("size", &self.size)
             .field("byte_count", &self.byte_count())
-            .finish_non_exhaustive() // 不显示实际密钥数据，防止意外泄露
+            .finish_non_exhaustive() // Do not show actual key data to prevent accidental leakage
     }
 }
 
-// 防止密钥数据意外泄露
+// Prevent accidental key data leakage
 impl Drop for SymmetricKey {
     fn drop(&mut self) {
-        // 清零密钥数据
+        // Zero out key data
         for byte in &mut self.bytes {
             *byte = 0;
         }
     }
 }
 
-// 确保密钥不能被意外显示
+// Ensure key cannot be accidentally displayed
 impl std::fmt::Display for SymmetricKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "SymmetricKey({})", self.size.bit_count())

@@ -1,7 +1,7 @@
 use crate::error::{CryptoKitError, Result};
 use crate::keys::symmetric::{SymmetricKey, SymmetricKeySize};
 
-// 共享密钥 Swift FFI 声明
+// Shared secret Swift FFI declarations
 extern "C" {
     #[link_name = "shared_secret_hkdf_derive_key"]
     fn swift_shared_secret_hkdf_derive_key(
@@ -26,11 +26,11 @@ extern "C" {
     ) -> i32;
 }
 
-/// 共享密钥特性定义
+/// Shared secret trait definition
 ///
-/// 定义共享密钥应该具备的基本功能
+/// Defines the basic functionality that a shared secret should have
 pub trait SharedSecret {
-    /// 使用 HKDF-SHA256 从共享密钥派生对称密钥
+    /// Derive a symmetric key from the shared secret using HKDF-SHA256
     fn hkdf_derive_key(
         &self,
         salt: &[u8],
@@ -38,30 +38,30 @@ pub trait SharedSecret {
         output_byte_count: usize,
     ) -> Result<SymmetricKey>;
 
-    /// 使用 X9.63 KDF 从共享密钥派生对称密钥
+    /// Derive a symmetric key from the shared secret using X9.63 KDF
     fn x963_derive_key(&self, shared_info: &[u8], output_byte_count: usize)
-    -> Result<SymmetricKey>;
+        -> Result<SymmetricKey>;
 
-    /// 获取共享密钥的字节表示
+    /// Get the byte representation of the shared secret
     fn as_bytes(&self) -> &[u8];
 }
 
-/// 共享密钥的具体实现
+/// Concrete implementation of shared secret
 ///
-/// 与 Apple CryptoKit 的 SharedSecret 对应，通常从密钥交换算法获得
+/// Corresponds to Apple CryptoKit's SharedSecret, typically obtained from key exchange algorithms
 #[derive(Clone)]
 pub struct SharedSecretImpl {
     bytes: Vec<u8>,
 }
 
 impl SharedSecretImpl {
-    /// 从字节数据创建共享密钥
+    /// Create a shared secret from byte data
     ///
     /// # Arguments
-    /// * `data` - 共享密钥的字节数据
+    /// * `data` - The byte data of the shared secret
     ///
     /// # Returns
-    /// 新的共享密钥实例
+    /// A new shared secret instance
     pub fn from_data(data: &[u8]) -> Result<Self> {
         if data.is_empty() {
             return Err(CryptoKitError::InvalidInput(
@@ -74,20 +74,20 @@ impl SharedSecretImpl {
         })
     }
 
-    /// 获取共享密钥的字节长度
+    /// Get the byte length of the shared secret
     pub fn byte_count(&self) -> usize {
         self.bytes.len()
     }
 
-    /// 比较两个共享密钥是否相等
+    /// Compare two shared secrets for equality
     ///
-    /// 使用常数时间比较避免时序攻击
+    /// Uses constant-time comparison to avoid timing attacks
     pub fn equals(&self, other: &Self) -> bool {
         if self.bytes.len() != other.bytes.len() {
             return false;
         }
 
-        // 常数时间比较
+        // Constant-time comparison
         let mut result = 0u8;
         for (a, b) in self.bytes.iter().zip(other.bytes.iter()) {
             result |= a ^ b;
@@ -97,22 +97,22 @@ impl SharedSecretImpl {
 }
 
 impl SharedSecret for SharedSecretImpl {
-    /// 使用 HKDF-SHA256 从共享密钥派生对称密钥
+    /// Derive a symmetric key from the shared secret using HKDF-SHA256
     ///
     /// # Arguments
-    /// * `salt` - 盐值（可以为空）
-    /// * `info` - 上下文信息（可以为空）
-    /// * `output_byte_count` - 输出密钥的字节长度
+    /// * `salt` - Salt value (can be empty)
+    /// * `info` - Context information (can be empty)
+    /// * `output_byte_count` - Byte length of the output key
     ///
     /// # Returns
-    /// 派生得到的对称密钥
+    /// The derived symmetric key
     fn hkdf_derive_key(
         &self,
         salt: &[u8],
         info: &[u8],
         output_byte_count: usize,
     ) -> Result<SymmetricKey> {
-        // 验证输出长度
+        // Validate output length
         let _size = SymmetricKeySize::from_byte_count(output_byte_count)?;
 
         unsafe {
@@ -137,20 +137,20 @@ impl SharedSecret for SharedSecretImpl {
         }
     }
 
-    /// 使用 X9.63 KDF 从共享密钥派生对称密钥
+    /// Derive a symmetric key from the shared secret using X9.63 KDF
     ///
     /// # Arguments
-    /// * `shared_info` - 共享信息（可以为空）
-    /// * `output_byte_count` - 输出密钥的字节长度
+    /// * `shared_info` - Shared information (can be empty)
+    /// * `output_byte_count` - Byte length of the output key
     ///
     /// # Returns
-    /// 派生得到的对称密钥
+    /// The derived symmetric key
     fn x963_derive_key(
         &self,
         shared_info: &[u8],
         output_byte_count: usize,
     ) -> Result<SymmetricKey> {
-        // 验证输出长度
+        // Validate output length
         let _size = SymmetricKeySize::from_byte_count(output_byte_count)?;
 
         unsafe {
@@ -190,21 +190,21 @@ impl std::fmt::Debug for SharedSecretImpl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SharedSecret")
             .field("byte_count", &self.byte_count())
-            .finish_non_exhaustive() // 不显示实际密钥数据，防止意外泄露
+            .finish_non_exhaustive() // Don't display actual key data to prevent accidental leakage
     }
 }
 
-// 防止密钥数据意外泄露
+// Prevent accidental leakage of key data
 impl Drop for SharedSecretImpl {
     fn drop(&mut self) {
-        // 清零密钥数据
+        // Zero out key data
         for byte in &mut self.bytes {
             *byte = 0;
         }
     }
 }
 
-// 确保共享密钥不能被意外显示
+// Ensure shared secret cannot be accidentally displayed
 impl std::fmt::Display for SharedSecretImpl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "SharedSecret({} bytes)", self.byte_count())

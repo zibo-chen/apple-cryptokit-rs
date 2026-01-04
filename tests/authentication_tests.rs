@@ -267,9 +267,9 @@ mod integration_tests {
             .compute(data)
             .unwrap();
 
-        assert_eq!(direct_result.as_ref(), trait_result.as_ref());
-        assert_eq!(direct_result.as_ref(), &enum_result[..]);
-        assert_eq!(direct_result.as_ref(), &builder_result[..]);
+        assert_eq!(direct_result.as_ref() as &[u8], trait_result.as_slice());
+        assert_eq!(direct_result.as_ref() as &[u8], &enum_result[..]);
+        assert_eq!(direct_result.as_ref() as &[u8], &builder_result[..]);
     }
 
     #[test]

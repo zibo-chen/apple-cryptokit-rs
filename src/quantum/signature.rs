@@ -1,62 +1,62 @@
-//! # 量子安全数字签名算法
+//! # Quantum-Safe Digital Signature Algorithms
 //!
-//! 本模块实现了抗量子攻击的数字签名算法，包括：
-//! - ML-DSA65: 基于格的数字签名算法，安全级别2
-//! - ML-DSA87: 基于格的数字签名算法，安全级别3
+//! This module implements quantum-resistant digital signature algorithms, including:
+//! - ML-DSA65: Lattice-based digital signature algorithm, security level 2
+//! - ML-DSA87: Lattice-based digital signature algorithm, security level 3
 //!
-//! 这些算法提供量子安全的数字签名功能。
+//! These algorithms provide quantum-safe digital signature capabilities.
 
 use crate::quantum::QuantumSafe;
 use crate::{CryptoKitError, Result};
 
-/// 数字签名算法的通用特征
+/// Generic trait for digital signature algorithms
 pub trait DigitalSignatureAlgorithm: QuantumSafe {
     type PrivateKey: SignaturePrivateKey;
     type PublicKey: SignaturePublicKey;
 
-    /// 生成新的私钥
+    /// Generate a new private key
     fn generate_private_key() -> Result<Self::PrivateKey>;
 }
 
-/// 签名私钥的通用特征
+/// Generic trait for signature private keys
 pub trait SignaturePrivateKey {
     type PublicKey: SignaturePublicKey;
     type Signature;
 
-    /// 获取对应的公钥
+    /// Get the corresponding public key
     fn public_key(&self) -> Self::PublicKey;
 
-    /// 对消息进行签名
+    /// Sign a message
     fn sign(&self, message: &[u8]) -> Result<Self::Signature>;
 
-    /// 将私钥序列化为字节数组
+    /// Serialize the private key to a byte array
     fn to_bytes(&self) -> Vec<u8>;
 
-    /// 从字节数组反序列化私钥
+    /// Deserialize a private key from a byte array
     fn from_bytes(bytes: &[u8]) -> Result<Self>
     where
         Self: Sized;
 }
 
-/// 签名公钥的通用特征
+/// Generic trait for signature public keys
 pub trait SignaturePublicKey {
     type Signature;
 
-    /// 验证签名
+    /// Verify a signature
     fn verify(&self, message: &[u8], signature: &Self::Signature) -> Result<bool>;
 
-    /// 将公钥序列化为字节数组
+    /// Serialize the public key to a byte array
     fn to_bytes(&self) -> Vec<u8>;
 
-    /// 从字节数组反序列化公钥
+    /// Deserialize a public key from a byte array
     fn from_bytes(bytes: &[u8]) -> Result<Self>
     where
         Self: Sized;
 }
 
-// ML-DSA65 实现
+// ML-DSA65 Implementation
 
-/// ML-DSA65 算法（安全级别2）
+/// ML-DSA65 algorithm (Security Level 2)
 pub struct MLDsa65;
 
 impl QuantumSafe for MLDsa65 {
@@ -65,7 +65,7 @@ impl QuantumSafe for MLDsa65 {
     }
 
     fn security_level() -> u8 {
-        2 // NIST 安全级别 2
+        2 // NIST security level 2
     }
 }
 
@@ -97,7 +97,7 @@ impl DigitalSignatureAlgorithm for MLDsa65 {
     }
 }
 
-/// ML-DSA65 私钥
+/// ML-DSA65 private key
 pub struct MLDsa65PrivateKey {
     bytes: Vec<u8>,
     public_key: MLDsa65PublicKey,
@@ -144,7 +144,7 @@ impl SignaturePrivateKey for MLDsa65PrivateKey {
             ));
         }
 
-        // 从私钥推导公钥
+        // Derive public key from private key
         unsafe {
             let mut public_key_bytes = vec![0u8; MLDSA65_PUBLIC_KEY_SIZE];
 
@@ -167,7 +167,7 @@ impl SignaturePrivateKey for MLDsa65PrivateKey {
     }
 }
 
-/// ML-DSA65 公钥
+/// ML-DSA65 public key
 #[derive(Clone)]
 pub struct MLDsa65PublicKey {
     bytes: Vec<u8>,
@@ -211,9 +211,9 @@ impl SignaturePublicKey for MLDsa65PublicKey {
     }
 }
 
-// ML-DSA87 实现
+// ML-DSA87 Implementation
 
-/// ML-DSA87 算法（安全级别3）
+/// ML-DSA87 algorithm (Security Level 3)
 pub struct MLDsa87;
 
 impl QuantumSafe for MLDsa87 {
@@ -222,7 +222,7 @@ impl QuantumSafe for MLDsa87 {
     }
 
     fn security_level() -> u8 {
-        3 // NIST 安全级别 3
+        3 // NIST security level 3
     }
 }
 
@@ -254,7 +254,7 @@ impl DigitalSignatureAlgorithm for MLDsa87 {
     }
 }
 
-/// ML-DSA87 私钥
+/// ML-DSA87 private key
 pub struct MLDsa87PrivateKey {
     bytes: Vec<u8>,
     public_key: MLDsa87PublicKey,
@@ -301,7 +301,7 @@ impl SignaturePrivateKey for MLDsa87PrivateKey {
             ));
         }
 
-        // 从私钥推导公钥
+        // Derive public key from private key
         unsafe {
             let mut public_key_bytes = vec![0u8; MLDSA87_PUBLIC_KEY_SIZE];
 
@@ -324,7 +324,7 @@ impl SignaturePrivateKey for MLDsa87PrivateKey {
     }
 }
 
-/// ML-DSA87 公钥
+/// ML-DSA87 public key
 #[derive(Clone)]
 pub struct MLDsa87PublicKey {
     bytes: Vec<u8>,
@@ -368,16 +368,16 @@ impl SignaturePublicKey for MLDsa87PublicKey {
     }
 }
 
-// 常量定义 - 根据NIST标准
+// Constant definitions - According to NIST standard
 const MLDSA65_PUBLIC_KEY_SIZE: usize = 1952;
 const MLDSA65_PRIVATE_KEY_SIZE: usize = 4032;
-const MLDSA65_SIGNATURE_SIZE: usize = 3309; // 最大签名长度
+const MLDSA65_SIGNATURE_SIZE: usize = 3309; // Maximum signature length
 
 const MLDSA87_PUBLIC_KEY_SIZE: usize = 2592;
 const MLDSA87_PRIVATE_KEY_SIZE: usize = 4896;
-const MLDSA87_SIGNATURE_SIZE: usize = 4627; // 最大签名长度
+const MLDSA87_SIGNATURE_SIZE: usize = 4627; // Maximum signature length
 
-// Swift FFI 声明
+// Swift FFI declarations
 extern "C" {
     // ML-DSA65
     fn swift_mldsa65_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;

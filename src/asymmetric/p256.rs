@@ -1,9 +1,9 @@
-// P-256 椭圆曲线实现
+// P-256 elliptic curve implementation
 
 use crate::asymmetric::{KeyAgreement, SignatureAlgorithm};
 use crate::error::{CryptoKitError, Result};
 
-// P-256 相关的 Swift FFI 声明
+// P-256 related Swift FFI declarations
 extern "C" {
     fn swift_p256_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;
     fn swift_p256_sign(
@@ -25,25 +25,25 @@ extern "C" {
     ) -> i32;
 }
 
-/// P-256 私钥 (32 bytes)
+/// P-256 private key (32 bytes)
 #[derive(Clone)]
 pub struct P256PrivateKey {
     data: [u8; 32],
 }
 
-/// P-256 公钥 (64 bytes)
+/// P-256 public key (64 bytes)
 #[derive(Clone)]
 pub struct P256PublicKey {
     data: [u8; 64],
 }
 
-/// P-256 签名 (64 bytes)
+/// P-256 signature (64 bytes)
 #[derive(Clone)]
 pub struct P256Signature {
     data: [u8; 64],
 }
 
-/// P-256 共享密钥 (32 bytes)
+/// P-256 shared secret (32 bytes)
 #[derive(Clone)]
 pub struct P256SharedSecret {
     data: [u8; 32],
@@ -89,7 +89,7 @@ impl P256SharedSecret {
     }
 }
 
-/// P-256 椭圆曲线数字签名算法
+/// P-256 elliptic curve digital signature algorithm
 pub struct P256;
 
 impl SignatureAlgorithm for P256 {
@@ -188,7 +188,7 @@ impl KeyAgreement for P256 {
     }
 }
 
-// 便利函数
+// Convenience functions
 pub fn generate_keypair() -> Result<(P256PrivateKey, P256PublicKey)> {
     <P256 as SignatureAlgorithm>::generate_key_pair()
 }

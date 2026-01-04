@@ -1,9 +1,9 @@
-// P-384 椭圆曲线实现
+// P-384 elliptic curve implementation
 
 use crate::asymmetric::{KeyAgreement, SignatureAlgorithm};
 use crate::error::{CryptoKitError, Result};
 
-// P-384 相关的 Swift FFI 声明
+// P-384 related Swift FFI declarations
 extern "C" {
     fn swift_p384_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;
     fn swift_p384_sign(
@@ -25,25 +25,25 @@ extern "C" {
     ) -> i32;
 }
 
-/// P-384 私钥 (48 bytes)
+/// P-384 private key (48 bytes)
 #[derive(Clone)]
 pub struct P384PrivateKey {
     data: [u8; 48],
 }
 
-/// P-384 公钥 (96 bytes)
+/// P-384 public key (96 bytes)
 #[derive(Clone)]
 pub struct P384PublicKey {
     data: [u8; 96],
 }
 
-/// P-384 签名 (96 bytes)
+/// P-384 signature (96 bytes)
 #[derive(Clone)]
 pub struct P384Signature {
     data: [u8; 96],
 }
 
-/// P-384 共享密钥 (48 bytes)
+/// P-384 shared secret (48 bytes)
 #[derive(Clone)]
 pub struct P384SharedSecret {
     data: [u8; 48],
@@ -89,7 +89,7 @@ impl P384SharedSecret {
     }
 }
 
-/// P-384 椭圆曲线数字签名算法
+/// P-384 elliptic curve digital signature algorithm
 pub struct P384;
 
 impl SignatureAlgorithm for P384 {
@@ -188,7 +188,7 @@ impl KeyAgreement for P384 {
     }
 }
 
-// 便利函数
+// Convenience functions
 pub fn generate_keypair() -> Result<(P384PrivateKey, P384PublicKey)> {
     <P384 as SignatureAlgorithm>::generate_key_pair()
 }

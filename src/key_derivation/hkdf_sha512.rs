@@ -1,7 +1,7 @@
 use super::KeyDerivationFunction;
 use crate::error::{CryptoKitError, Result};
 
-// HKDF-SHA512 Swift FFI 声明
+// HKDF-SHA512 Swift FFI declarations
 extern "C" {
     #[link_name = "hkdf_sha512_derive"]
     fn swift_hkdf_sha512_derive(
@@ -16,26 +16,26 @@ extern "C" {
     ) -> i32;
 }
 
-/// HKDF-SHA512 密钥派生实现
+/// HKDF-SHA512 key derivation implementation
 #[allow(non_camel_case_types)]
 pub struct HKDF_SHA512;
 
 impl HKDF_SHA512 {
-    /// 从输入密钥材料派生密钥，使用SHA512哈希算法
+    /// Derive key from input key material using SHA512 hash algorithm
     ///
-    /// # 参数
-    /// * `input_key_material` - 输入密钥材料
-    /// * `salt` - 盐值（可选，建议使用）
-    /// * `info` - 应用特定信息（可选）
-    /// * `output_length` - 输出密钥长度
+    /// # Parameters
+    /// * `input_key_material` - Input key material
+    /// * `salt` - Salt value (optional, recommended)
+    /// * `info` - Application-specific information (optional)
+    /// * `output_length` - Output key length
     ///
-    /// # 返回
-    /// 派生的密钥数据
+    /// # Returns
+    /// Derived key data
     ///
-    /// # 错误
-    /// 如果密钥派生失败，返回 `CryptoKitError::DerivationFailed`
+    /// # Errors
+    /// Returns `CryptoKitError::DerivationFailed` if key derivation fails
     ///
-    /// # 示例
+    /// # Example
     /// ```rust,no_run
     /// use apple_cryptokit::key_derivation::hkdf_sha512::HKDF_SHA512;
     /// use apple_cryptokit::key_derivation::KeyDerivationFunction;
@@ -57,26 +57,25 @@ impl HKDF_SHA512 {
 }
 
 impl KeyDerivationFunction for HKDF_SHA512 {
-    fn derive(
+    fn derive_to(
         input_key_material: &[u8],
         salt: &[u8],
         info: &[u8],
-        output_length: usize,
-    ) -> Result<Vec<u8>> {
+        output: &mut [u8],
+    ) -> Result<()> {
         if input_key_material.is_empty() {
             return Err(CryptoKitError::InvalidInput(
                 "Input key material cannot be empty".to_string(),
             ));
         }
 
+        let output_length = output.len();
         if output_length == 0 || output_length > 255 * 64 {
-            // SHA512输出64字节，最大255个输出块
+            // SHA512 outputs 64 bytes, maximum 255 output blocks
             return Err(CryptoKitError::InvalidLength);
         }
 
         unsafe {
-            let mut output = vec![0u8; output_length];
-
             let result = swift_hkdf_sha512_derive(
                 input_key_material.as_ptr(),
                 input_key_material.len() as i32,
@@ -89,7 +88,7 @@ impl KeyDerivationFunction for HKDF_SHA512 {
             );
 
             if result == 0 {
-                Ok(output)
+                Ok(())
             } else {
                 Err(CryptoKitError::DerivationFailed)
             }
@@ -97,13 +96,13 @@ impl KeyDerivationFunction for HKDF_SHA512 {
     }
 }
 
-/// 便利函数：HKDF-SHA512 密钥派生
+/// Convenience function: HKDF-SHA512 key derivation
 ///
-/// # 参数
-/// * `input_key_material` - 输入密钥材料
-/// * `salt` - 盐值（可选，建议使用）
-/// * `info` - 应用特定信息（可选）
-/// * `output_length` - 输出密钥长度
+/// # Parameters
+/// * `input_key_material` - Input key material
+/// * `salt` - Salt value (optional, recommended)
+/// * `info` - Application-specific information (optional)
+/// * `output_length` - Output key length
 pub fn hkdf_sha512_derive(
     input_key_material: &[u8],
     salt: &[u8],

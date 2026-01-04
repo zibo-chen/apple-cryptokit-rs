@@ -1,7 +1,7 @@
 use crate::authentication::hmac::HMAC;
 use crate::error::{CryptoKitError, Result};
 
-// HMAC-SHA256 Swift FFI 声明
+// HMAC-SHA256 Swift FFI declarations
 extern "C" {
     #[link_name = "hmac_sha256"]
     fn swift_hmac_sha256(
@@ -13,13 +13,28 @@ extern "C" {
     ) -> i32;
 }
 
-/// HMAC-SHA256 输出大小
+/// HMAC-SHA256 output size
 pub const HMAC_SHA256_OUTPUT_SIZE: usize = 32;
 
-/// HMAC-SHA256 消息认证码
+/// HMAC-SHA256 message authentication code
 pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA256_OUTPUT_SIZE]> {
+    let mut output = [0u8; HMAC_SHA256_OUTPUT_SIZE];
+    hmac_sha256_to(key, data, &mut output)?;
+    Ok(output)
+}
+
+/// HMAC-SHA256 message authentication code to provided buffer (zero-allocation)
+///
+/// # Parameters
+/// - `output`: Must be at least 32 bytes
+pub fn hmac_sha256_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+    assert!(
+        output.len() >= HMAC_SHA256_OUTPUT_SIZE,
+        "Output buffer too small: {} < {}",
+        output.len(),
+        HMAC_SHA256_OUTPUT_SIZE
+    );
     unsafe {
-        let mut output = [0u8; HMAC_SHA256_OUTPUT_SIZE];
         let result = swift_hmac_sha256(
             key.as_ptr(),
             key.len() as i32,
@@ -31,28 +46,24 @@ pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA256_OUTPUT_SI
         if result < 0 {
             Err(CryptoKitError::SignatureFailed)
         } else {
-            Ok(output)
+            Ok(())
         }
     }
 }
 
-/// HMAC-SHA256 实现
+/// HMAC-SHA256 implementation
 pub struct HmacSha256;
 
 impl HMAC for HmacSha256 {
-    type Output = [u8; HMAC_SHA256_OUTPUT_SIZE];
+    const OUTPUT_SIZE: usize = HMAC_SHA256_OUTPUT_SIZE;
 
-    fn authenticate(key: &[u8], data: &[u8]) -> Result<Self::Output> {
-        hmac_sha256(key, data)
-    }
-
-    fn output_size() -> usize {
-        HMAC_SHA256_OUTPUT_SIZE
+    fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
+        hmac_sha256_to(key, data, output)
     }
 }
 
 impl HmacSha256 {
-    /// 验证HMAC-SHA256
+    /// Verify HMAC-SHA256
     pub fn verify(key: &[u8], data: &[u8], expected: &[u8]) -> Result<bool> {
         let computed = Self::authenticate(key, data)?;
         Ok(super::hmac::constant_time_eq(&computed, expected))
@@ -98,7 +109,7 @@ mod tests {
         assert!(verify_result.is_ok());
         assert!(verify_result.unwrap());
 
-        // 测试错误的HMAC
+        // Test wrong HMAC
         let wrong_hmac = [0u8; HMAC_SHA256_OUTPUT_SIZE];
         let verify_wrong = HmacSha256::verify(key, data, &wrong_hmac);
         assert!(verify_wrong.is_ok());
@@ -111,7 +122,7 @@ mod tests {
         let data = b"test_data";
 
         let result = hmac_sha256(key, data);
-        assert!(result.is_ok()); // HMAC允许空密钥，但不推荐
+        assert!(result.is_ok()); // HMAC allows empty keys, but not recommended
     }
 
     #[test]

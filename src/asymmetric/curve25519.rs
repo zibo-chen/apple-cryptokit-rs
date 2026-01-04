@@ -1,7 +1,7 @@
 use crate::asymmetric::{KeyAgreement, SignatureAlgorithm};
 use crate::error::{CryptoKitError, Result};
 
-// Curve25519 相关的 Swift FFI 声明
+// Curve25519 related Swift FFI declarations
 extern "C" {
     fn swift_ed25519_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;
     fn swift_ed25519_sign(
@@ -24,79 +24,79 @@ extern "C" {
     ) -> i32;
 }
 
-/// Curve25519 私钥
+/// Curve25519 private key
 #[derive(Clone)]
 pub struct Curve25519PrivateKey {
     data: [u8; 32],
 }
 
-/// Curve25519 公钥
+/// Curve25519 public key
 #[derive(Clone)]
 pub struct Curve25519PublicKey {
     data: [u8; 32],
 }
 
-/// Ed25519 数字签名
+/// Ed25519 digital signature
 #[derive(Clone)]
 pub struct Ed25519Signature {
     data: [u8; 64],
 }
 
-/// 共享密钥
+/// Shared secret
 #[derive(Clone)]
 pub struct SharedSecret {
     data: [u8; 32],
 }
 
 impl Curve25519PrivateKey {
-    /// 从原始字节创建私钥
+    /// Create private key from raw bytes
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self { data: bytes }
     }
 
-    /// 获取原始字节
+    /// Get raw bytes
     pub fn as_bytes(&self) -> &[u8; 32] {
         &self.data
     }
 }
 
 impl Curve25519PublicKey {
-    /// 从原始字节创建公钥
+    /// Create public key from raw bytes
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self { data: bytes }
     }
 
-    /// 获取原始字节
+    /// Get raw bytes
     pub fn as_bytes(&self) -> &[u8; 32] {
         &self.data
     }
 }
 
 impl Ed25519Signature {
-    /// 从原始字节创建签名
+    /// Create signature from raw bytes
     pub fn from_bytes(bytes: [u8; 64]) -> Self {
         Self { data: bytes }
     }
 
-    /// 获取原始字节
+    /// Get raw bytes
     pub fn as_bytes(&self) -> &[u8; 64] {
         &self.data
     }
 }
 
 impl SharedSecret {
-    /// 从原始字节创建共享密钥
+    /// Create shared secret from raw bytes
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self { data: bytes }
     }
 
-    /// 获取原始字节
+    /// Get raw bytes
     pub fn as_bytes(&self) -> &[u8; 32] {
         &self.data
     }
 }
 
-/// Ed25519 数字签名算法（基于Curve25519）
+/// Ed25519 digital signature algorithm (based on Curve25519)
 pub struct Ed25519;
 
 impl SignatureAlgorithm for Ed25519 {
@@ -164,7 +164,7 @@ impl SignatureAlgorithm for Ed25519 {
     }
 }
 
-/// X25519 密钥交换算法（基于Curve25519）
+/// X25519 key exchange algorithm (based on Curve25519)
 pub struct X25519;
 
 impl KeyAgreement for X25519 {
@@ -213,7 +213,7 @@ impl KeyAgreement for X25519 {
     }
 }
 
-// 提供便利函数
+// Provide convenience functions
 pub fn ed25519_generate_keypair() -> Result<(Curve25519PrivateKey, Curve25519PublicKey)> {
     Ed25519::generate_key_pair()
 }

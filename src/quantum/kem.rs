@@ -1,63 +1,63 @@
-//! # 密钥封装机制 (Key Encapsulation Mechanisms)
+//! # Key Encapsulation Mechanisms
 //!
-//! 本模块实现了抗量子攻击的密钥封装机制，包括：
-//! - ML-KEM768: 基于格的密钥封装机制，安全级别1
-//! - ML-KEM1024: 基于格的密钥封装机制，安全级别3
-//! - X-Wing: 混合KEM，结合了ML-KEM768和X25519
+//! This module implements quantum-resistant key encapsulation mechanisms, including:
+//! - ML-KEM768: Lattice-based key encapsulation mechanism, security level 1
+//! - ML-KEM1024: Lattice-based key encapsulation mechanism, security level 3
+//! - X-Wing: Hybrid KEM combining ML-KEM768 and X25519
 //!
-//! 这些算法提供量子安全的密钥交换功能。
+//! These algorithms provide quantum-safe key exchange capabilities.
 
 use crate::quantum::QuantumSafe;
 use crate::{CryptoKitError, Result};
 
-/// 密钥封装机制的通用特征
+/// Generic trait for key encapsulation mechanisms
 pub trait KeyEncapsulationMechanism: QuantumSafe {
     type PrivateKey: KEMPrivateKey;
     type PublicKey: KEMPublicKey;
 
-    /// 生成新的私钥
+    /// Generate a new private key
     fn generate_private_key() -> Result<Self::PrivateKey>;
 }
 
-/// KEM私钥的通用特征
+/// Generic trait for KEM private keys
 pub trait KEMPrivateKey {
     type PublicKey: KEMPublicKey;
     type SharedSecret;
 
-    /// 获取对应的公钥
+    /// Get the corresponding public key
     fn public_key(&self) -> Self::PublicKey;
 
-    /// 解封装密文，获得共享密钥
+    /// Decapsulate ciphertext to obtain the shared secret
     fn decapsulate(&self, ciphertext: &[u8]) -> Result<Self::SharedSecret>;
 
-    /// 将私钥序列化为字节数组
+    /// Serialize the private key to a byte array
     fn to_bytes(&self) -> Vec<u8>;
 
-    /// 从字节数组反序列化私钥
+    /// Deserialize a private key from a byte array
     fn from_bytes(bytes: &[u8]) -> Result<Self>
     where
         Self: Sized;
 }
 
-/// KEM公钥的通用特征
+/// Generic trait for KEM public keys
 pub trait KEMPublicKey {
     type SharedSecret;
 
-    /// 封装操作，生成密文和共享密钥
+    /// Encapsulate to generate ciphertext and shared secret
     fn encapsulate(&self) -> Result<(Vec<u8>, Self::SharedSecret)>;
 
-    /// 将公钥序列化为字节数组
+    /// Serialize the public key to a byte array
     fn to_bytes(&self) -> Vec<u8>;
 
-    /// 从字节数组反序列化公钥
+    /// Deserialize a public key from a byte array
     fn from_bytes(bytes: &[u8]) -> Result<Self>
     where
         Self: Sized;
 }
 
-// ML-KEM768 实现
+// ML-KEM768 Implementation
 
-/// ML-KEM768 算法（安全级别1）
+/// ML-KEM768 algorithm (Security Level 1)
 pub struct MLKem768;
 
 impl QuantumSafe for MLKem768 {
@@ -66,7 +66,7 @@ impl QuantumSafe for MLKem768 {
     }
 
     fn security_level() -> u8 {
-        1 // NIST 安全级别 1
+        1 // NIST security level 1
     }
 }
 
@@ -98,7 +98,7 @@ impl KeyEncapsulationMechanism for MLKem768 {
     }
 }
 
-/// ML-KEM768 私钥
+/// ML-KEM768 private key
 pub struct MLKem768PrivateKey {
     bytes: Vec<u8>,
     public_key: MLKem768PublicKey,
@@ -147,7 +147,7 @@ impl KEMPrivateKey for MLKem768PrivateKey {
             ));
         }
 
-        // 从私钥推导公钥
+        // Derive public key from private key
         unsafe {
             let mut public_key_bytes = vec![0u8; MLKEM768_PUBLIC_KEY_SIZE];
 
@@ -170,7 +170,7 @@ impl KEMPrivateKey for MLKem768PrivateKey {
     }
 }
 
-/// ML-KEM768 公钥
+/// ML-KEM768 public key
 #[derive(Clone)]
 pub struct MLKem768PublicKey {
     bytes: Vec<u8>,
@@ -215,9 +215,9 @@ impl KEMPublicKey for MLKem768PublicKey {
     }
 }
 
-// ML-KEM1024 实现
+// ML-KEM1024 Implementation
 
-/// ML-KEM1024 算法（安全级别3）
+/// ML-KEM1024 algorithm (Security Level 3)
 pub struct MLKem1024;
 
 impl QuantumSafe for MLKem1024 {
@@ -226,7 +226,7 @@ impl QuantumSafe for MLKem1024 {
     }
 
     fn security_level() -> u8 {
-        3 // NIST 安全级别 3
+        3 // NIST security level 3
     }
 }
 
@@ -258,7 +258,7 @@ impl KeyEncapsulationMechanism for MLKem1024 {
     }
 }
 
-/// ML-KEM1024 私钥
+/// ML-KEM1024 private key
 pub struct MLKem1024PrivateKey {
     bytes: Vec<u8>,
     public_key: MLKem1024PublicKey,
@@ -307,7 +307,7 @@ impl KEMPrivateKey for MLKem1024PrivateKey {
             ));
         }
 
-        // 从私钥推导公钥
+        // Derive public key from private key
         unsafe {
             let mut public_key_bytes = vec![0u8; MLKEM1024_PUBLIC_KEY_SIZE];
 
@@ -330,7 +330,7 @@ impl KEMPrivateKey for MLKem1024PrivateKey {
     }
 }
 
-/// ML-KEM1024 公钥
+/// ML-KEM1024 public key
 #[derive(Clone)]
 pub struct MLKem1024PublicKey {
     bytes: Vec<u8>,
@@ -375,9 +375,9 @@ impl KEMPublicKey for MLKem1024PublicKey {
     }
 }
 
-// X-Wing 混合KEM 实现
+// X-Wing Hybrid KEM Implementation
 
-/// X-Wing (ML-KEM768 + X25519) 混合KEM
+/// X-Wing (ML-KEM768 + X25519) Hybrid KEM
 pub struct XWingMLKem768X25519;
 
 impl QuantumSafe for XWingMLKem768X25519 {
@@ -386,7 +386,7 @@ impl QuantumSafe for XWingMLKem768X25519 {
     }
 
     fn security_level() -> u8 {
-        1 // 基于ML-KEM768的安全级别
+        1 // Security level based on ML-KEM768
     }
 }
 
@@ -418,7 +418,7 @@ impl KeyEncapsulationMechanism for XWingMLKem768X25519 {
     }
 }
 
-/// X-Wing 私钥
+/// X-Wing private key
 pub struct XWingMLKem768X25519PrivateKey {
     bytes: Vec<u8>,
     public_key: XWingMLKem768X25519PublicKey,
@@ -467,7 +467,7 @@ impl KEMPrivateKey for XWingMLKem768X25519PrivateKey {
             ));
         }
 
-        // 从私钥推导公钥
+        // Derive public key from private key
         unsafe {
             let mut public_key_bytes = vec![0u8; XWING_PUBLIC_KEY_SIZE];
 
@@ -490,7 +490,7 @@ impl KEMPrivateKey for XWingMLKem768X25519PrivateKey {
     }
 }
 
-/// X-Wing 公钥
+/// X-Wing public key
 #[derive(Clone)]
 pub struct XWingMLKem768X25519PublicKey {
     bytes: Vec<u8>,
@@ -535,7 +535,7 @@ impl KEMPublicKey for XWingMLKem768X25519PublicKey {
     }
 }
 
-// 常量定义 - 根据NIST标准
+// Constant definitions - According to NIST standard
 const MLKEM768_PUBLIC_KEY_SIZE: usize = 1184;
 const MLKEM768_PRIVATE_KEY_SIZE: usize = 2400;
 const MLKEM768_CIPHERTEXT_SIZE: usize = 1088;
@@ -544,11 +544,11 @@ const MLKEM1024_PUBLIC_KEY_SIZE: usize = 1568;
 const MLKEM1024_PRIVATE_KEY_SIZE: usize = 3168;
 const MLKEM1024_CIPHERTEXT_SIZE: usize = 1568;
 
-const XWING_PUBLIC_KEY_SIZE: usize = 1216; // ML-KEM768 公钥 + X25519 公钥
-const XWING_PRIVATE_KEY_SIZE: usize = 2432; // ML-KEM768 私钥 + X25519 私钥
-const XWING_CIPHERTEXT_SIZE: usize = 1120; // ML-KEM768 密文 + X25519 密文
+const XWING_PUBLIC_KEY_SIZE: usize = 1216; // ML-KEM768 public key + X25519 public key
+const XWING_PRIVATE_KEY_SIZE: usize = 2432; // ML-KEM768 private key + X25519 private key
+const XWING_CIPHERTEXT_SIZE: usize = 1120; // ML-KEM768 ciphertext + X25519 ciphertext
 
-// Swift FFI 声明
+// Swift FFI declarations
 extern "C" {
     // ML-KEM768
     fn swift_mlkem768_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;

@@ -1,32 +1,34 @@
-/// CryptoKit错误类型
+/// CryptoKit error type
 #[derive(Debug, PartialEq, Clone)]
 pub enum CryptoKitError {
-    /// 无效的密钥
+    /// Invalid key
     InvalidKey,
-    /// 无效的随机数/nonce
+    /// Invalid nonce
     InvalidNonce,
-    /// 无效的输入参数
+    /// Invalid input parameter
     InvalidInput(String),
-    /// 加密失败
+    /// Encryption failed
     EncryptionFailed,
-    /// 解密失败
+    /// Decryption failed
     DecryptionFailed,
-    /// 签名生成失败
+    /// Signature generation failed
     SignatureFailed,
-    /// 签名验证失败
+    /// Signature verification failed
     VerificationFailed,
-    /// 签名操作失败
+    /// Signing operation failed
     SigningFailed,
-    /// 密钥生成失败
+    /// Key generation failed
     KeyGenerationFailed,
-    /// Nonce生成失败
+    /// Nonce generation failed
     NonceGenerationFailed,
-    /// 密钥派生失败
+    /// Key derivation failed
     DerivationFailed,
-    /// 数据长度错误
+    /// Invalid data length
     InvalidLength,
-    /// Swift FFI调用错误
+    /// Swift FFI call error
     SwiftCallFailed,
+    /// Output buffer too small
+    OutputBufferTooSmall(usize, usize),
 }
 
 impl std::fmt::Display for CryptoKitError {
@@ -45,11 +47,14 @@ impl std::fmt::Display for CryptoKitError {
             CryptoKitError::DerivationFailed => write!(f, "Key derivation failed"),
             CryptoKitError::InvalidLength => write!(f, "Invalid data length"),
             CryptoKitError::SwiftCallFailed => write!(f, "Swift FFI call failed"),
+            CryptoKitError::OutputBufferTooSmall(input_size, required_output_size) => {
+                write!(f, "Provided output buffer was too small. Require {required_output_size} bytes for input of length {input_size}.")
+            }
         }
     }
 }
 
 impl std::error::Error for CryptoKitError {}
 
-/// 库的Result类型
+/// Result type for this library
 pub type Result<T> = std::result::Result<T, CryptoKitError>;
