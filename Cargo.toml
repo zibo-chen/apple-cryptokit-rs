@@ -1,6 +1,6 @@
 [package]
 name = "apple-cryptokit-rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["ChenZibo <qw.54@163.com>"]
 readme = "README.md"
