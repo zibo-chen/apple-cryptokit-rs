@@ -7,7 +7,7 @@ use std::ffi::c_void;
 pub const SHA512_OUTPUT_SIZE: usize = 64;
 
 // SHA512 Swift FFI declarations
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha512_hash"]
     fn swift_sha512_hash(data: *const u8, length: i32, out_hash: *mut u8);
 

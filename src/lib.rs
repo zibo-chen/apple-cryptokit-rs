@@ -125,7 +125,7 @@ pub use quantum::{
 };
 
 // @deprecated Use functions from the `hashing` module instead
-unsafe extern "C" {
+extern "C" {
     #[link_name = "md5_hash"]
     fn swift_md5_hash(data: *const u8, length: i32, out_hash: *mut u8);
 }

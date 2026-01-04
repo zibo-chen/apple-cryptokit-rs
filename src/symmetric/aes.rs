@@ -2,7 +2,7 @@ use crate::error::{CryptoKitError, Result};
 use crate::symmetric::AuthenticatedCipher;
 
 // AES-GCM Swift FFI declarations
-unsafe extern "C" {
+extern "C" {
     #[link_name = "aes_gcm_encrypt"]
     fn swift_aes_gcm_encrypt(
         key: *const u8,

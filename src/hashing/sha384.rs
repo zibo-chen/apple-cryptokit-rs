@@ -7,7 +7,7 @@ use std::ffi::c_void;
 pub const SHA384_OUTPUT_SIZE: usize = 48;
 
 // SHA384 Swift FFI declarations
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha384_hash"]
     fn swift_sha384_hash(data: *const u8, length: i32, out_hash: *mut u8);
 

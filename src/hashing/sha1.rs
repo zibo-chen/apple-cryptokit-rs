@@ -6,7 +6,7 @@ use super::HashFunction;
 pub const SHA1_OUTPUT_SIZE: usize = 20;
 
 // SHA-1 Swift FFI declarations
-unsafe extern "C" {
+extern "C" {
     #[link_name = "sha1_hash"]
     fn swift_sha1_hash(data: *const u8, length: i32, out_hash: *mut u8);
 }

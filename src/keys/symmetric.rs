@@ -1,7 +1,7 @@
 use crate::error::{CryptoKitError, Result};
 
 // Symmetric key management Swift FFI declarations
-unsafe extern "C" {
+extern "C" {
     #[link_name = "symmetric_key_generate"]
     fn swift_symmetric_key_generate(size: i32, output: *mut u8) -> i32;
 

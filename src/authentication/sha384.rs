@@ -2,7 +2,7 @@ use crate::authentication::hmac::HMAC;
 use crate::error::{CryptoKitError, Result};
 
 // HMAC-SHA384 Swift FFI declarations
-unsafe extern "C" {
+extern "C" {
     #[link_name = "hmac_sha384"]
     fn swift_hmac_sha384(
         key: *const u8,
