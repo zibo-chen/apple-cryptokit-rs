@@ -89,8 +89,8 @@ pub use error::{CryptoKitError, Result};
 
 // Re-export hash-related items
 pub use hashing::{
-    HashAlgorithm, HashBuilder, HashFunction, SHA1, SHA256, SHA384, SHA512, Sha256, Sha384, Sha512,
-    sha1_hash, sha256_hash, sha384_hash, sha512_hash,
+    sha1_hash, sha256_hash, sha384_hash, sha512_hash, HashAlgorithm, HashBuilder, HashFunction,
+    Sha256, Sha384, Sha512, SHA1, SHA256, SHA384, SHA512,
 };
 
 // Re-export HMAC-related items
@@ -98,18 +98,18 @@ pub use authentication::{HMAC, hmac_sha1, hmac_sha256, hmac_sha384, hmac_sha512}
 
 // Re-export symmetric encryption items
 pub use symmetric::aes::{
-    AESGCMNonce, AESKey, AESKeySize, AesGcm, aes_gcm_decrypt, aes_gcm_decrypt_with_aad,
-    aes_gcm_encrypt, aes_gcm_encrypt_with_aad,
+    aes_gcm_decrypt, aes_gcm_decrypt_with_aad, aes_gcm_encrypt, aes_gcm_encrypt_with_aad,
+    AESGCMNonce, AESKey, AESKeySize, AesGcm,
 };
 pub use symmetric::chacha::{
-    ChaChaKey, ChaChaPoly, ChaChaPolyNonce, chacha20poly1305_decrypt,
-    chacha20poly1305_decrypt_with_aad, chacha20poly1305_encrypt, chacha20poly1305_encrypt_with_aad,
+    chacha20poly1305_decrypt, chacha20poly1305_decrypt_with_aad, chacha20poly1305_encrypt,
+    chacha20poly1305_encrypt_with_aad, ChaChaKey, ChaChaPoly, ChaChaPolyNonce,
 };
 pub use symmetric::{AuthenticatedCipher, Cipher};
 
 // Re-export key derivation items
 pub use key_derivation::{
-    KeyDerivationFunction, hkdf_sha256_derive, hkdf_sha384_derive, hkdf_sha512_derive,
+    hkdf_sha256_derive, hkdf_sha384_derive, hkdf_sha512_derive, KeyDerivationFunction,
 };
 
 // Re-export key management items
@@ -118,8 +118,8 @@ pub use keys::{SymmetricKey, SymmetricKeySize};
 // Re-export quantum-safe algorithm items
 pub use quantum::{
     DigitalSignatureAlgorithm, KEMPrivateKey, KEMPublicKey, KeyEncapsulationMechanism, MLDsa65,
-    MLDsa65PrivateKey, MLDsa65PublicKey, MLDsa87, MLDsa87PrivateKey, MLDsa87PublicKey, MLKem768,
-    MLKem768PrivateKey, MLKem768PublicKey, MLKem1024, MLKem1024PrivateKey, MLKem1024PublicKey,
+    MLDsa65PrivateKey, MLDsa65PublicKey, MLDsa87, MLDsa87PrivateKey, MLDsa87PublicKey, MLKem1024,
+    MLKem1024PrivateKey, MLKem1024PublicKey, MLKem768, MLKem768PrivateKey, MLKem768PublicKey,
     QuantumSafe, SignaturePrivateKey, SignaturePublicKey, XWingMLKem768X25519,
     XWingMLKem768X25519PrivateKey, XWingMLKem768X25519PublicKey,
 };
@@ -201,7 +201,7 @@ mod tests {
     #[test]
     fn test_chacha20poly1305_roundtrip() {
         let key = b"0123456789abcdef0123456789abcdef"; // 32-byte key
-        let nonce = b"cdef01234567"; // 12-byte nonce  
+        let nonce = b"cdef01234567"; // 12-byte nonce
         let plaintext = b"Hello, ChaCha20Poly1305!";
 
         // Test encryption and decryption round-trip

@@ -71,6 +71,10 @@ impl Sha384 {
 
     /// Finalize hash computation and return result
     pub fn finalize(self) -> [u8; 48] {
+        self.snapshot()
+    }
+
+    pub fn snapshot(&self) -> [u8; 48] {
         let mut hash = [0u8; 48];
         unsafe {
             swift_sha384_finalize(self.ptr, hash.as_mut_ptr());

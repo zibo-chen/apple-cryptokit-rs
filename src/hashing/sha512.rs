@@ -71,6 +71,10 @@ impl Sha512 {
 
     /// Finalize hash computation and return result
     pub fn finalize(self) -> [u8; 64] {
+        self.snapshot()
+    }
+
+    pub fn snapshot(&self) -> [u8; 64] {
         let mut hash = [0u8; 64];
         unsafe {
             swift_sha512_finalize(self.ptr, hash.as_mut_ptr());
