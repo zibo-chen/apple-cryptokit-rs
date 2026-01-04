@@ -1,7 +1,7 @@
 use crate::authentication::hmac::HMAC;
 use crate::error::{CryptoKitError, Result};
 
-// HMAC-SHA1 Swift FFI 声明
+// HMAC-SHA1 Swift FFI declarations
 unsafe extern "C" {
     #[link_name = "hmac_sha1"]
     fn swift_hmac_sha1(
@@ -13,20 +13,20 @@ unsafe extern "C" {
     ) -> i32;
 }
 
-/// HMAC-SHA1 输出大小
+/// HMAC-SHA1 output size
 pub const HMAC_SHA1_OUTPUT_SIZE: usize = 20;
 
-/// HMAC-SHA1 消息认证码
+/// HMAC-SHA1 message authentication code
 pub fn hmac_sha1(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA1_OUTPUT_SIZE]> {
     let mut output = [0u8; HMAC_SHA1_OUTPUT_SIZE];
     hmac_sha1_to(key, data, &mut output)?;
     Ok(output)
 }
 
-/// HMAC-SHA1 消息认证码到提供的缓冲区（零分配）
+/// HMAC-SHA1 message authentication code to provided buffer (zero-allocation)
 ///
-/// # 参数
-/// - `output`: 必须至少有 20 字节
+/// # Parameters
+/// - `output`: Must be at least 20 bytes
 pub fn hmac_sha1_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
     assert!(
         output.len() >= HMAC_SHA1_OUTPUT_SIZE,
@@ -51,7 +51,7 @@ pub fn hmac_sha1_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
     }
 }
 
-/// HMAC-SHA1 实现 (不安全，仅用于兼容性)
+/// HMAC-SHA1 implementation (insecure, for compatibility only)
 pub struct HmacSha1;
 
 impl HMAC for HmacSha1 {
@@ -63,7 +63,7 @@ impl HMAC for HmacSha1 {
 }
 
 impl HmacSha1 {
-    /// 验证HMAC-SHA1
+    /// Verify HMAC-SHA1
     pub fn verify(key: &[u8], data: &[u8], expected: &[u8]) -> Result<bool> {
         let computed = Self::authenticate(key, data)?;
         Ok(super::hmac::constant_time_eq(&computed, expected))
@@ -108,7 +108,7 @@ mod tests {
         assert!(verify_result.is_ok());
         assert!(verify_result.unwrap());
 
-        // 测试错误的HMAC
+        // Test wrong HMAC
         let wrong_hmac = [0u8; HMAC_SHA1_OUTPUT_SIZE];
         let verify_wrong = HmacSha1::verify(key, data, &wrong_hmac);
         assert!(verify_wrong.is_ok());

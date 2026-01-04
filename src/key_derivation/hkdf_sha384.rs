@@ -1,7 +1,7 @@
 use super::KeyDerivationFunction;
 use crate::error::{CryptoKitError, Result};
 
-// HKDF-SHA384 Swift FFI 声明
+// HKDF-SHA384 Swift FFI declarations
 unsafe extern "C" {
     #[link_name = "hkdf_sha384_derive"]
     fn swift_hkdf_sha384_derive(
@@ -16,26 +16,26 @@ unsafe extern "C" {
     ) -> i32;
 }
 
-/// HKDF-SHA384 密钥派生实现
+/// HKDF-SHA384 key derivation implementation
 #[allow(non_camel_case_types)]
 pub struct HKDF_SHA384;
 
 impl HKDF_SHA384 {
-    /// 从输入密钥材料派生密钥，使用SHA384哈希算法
+    /// Derive key from input key material using SHA384 hash algorithm
     ///
-    /// # 参数
-    /// * `input_key_material` - 输入密钥材料
-    /// * `salt` - 盐值（可选，建议使用）
-    /// * `info` - 应用特定信息（可选）
-    /// * `output_length` - 输出密钥长度
+    /// # Parameters
+    /// * `input_key_material` - Input key material
+    /// * `salt` - Salt value (optional, recommended)
+    /// * `info` - Application-specific information (optional)
+    /// * `output_length` - Output key length
     ///
-    /// # 返回
-    /// 派生的密钥数据
+    /// # Returns
+    /// Derived key data
     ///
-    /// # 错误
-    /// 如果密钥派生失败，返回 `CryptoKitError::DerivationFailed`
+    /// # Errors
+    /// Returns `CryptoKitError::DerivationFailed` if key derivation fails
     ///
-    /// # 示例
+    /// # Example
     /// ```rust,no_run
     /// use apple_cryptokit::key_derivation::hkdf_sha384::HKDF_SHA384;
     /// use apple_cryptokit::key_derivation::KeyDerivationFunction;
@@ -71,7 +71,7 @@ impl KeyDerivationFunction for HKDF_SHA384 {
 
         let output_length = output.len();
         if output_length == 0 || output_length > 255 * 48 {
-            // SHA384输出48字节，最大255个输出块
+            // SHA384 outputs 48 bytes, maximum 255 output blocks
             return Err(CryptoKitError::InvalidLength);
         }
 
@@ -96,13 +96,13 @@ impl KeyDerivationFunction for HKDF_SHA384 {
     }
 }
 
-/// 便利函数：HKDF-SHA384 密钥派生
+/// Convenience function: HKDF-SHA384 key derivation
 ///
-/// # 参数
-/// * `input_key_material` - 输入密钥材料
-/// * `salt` - 盐值（可选，建议使用）
-/// * `info` - 应用特定信息（可选）
-/// * `output_length` - 输出密钥长度
+/// # Parameters
+/// * `input_key_material` - Input key material
+/// * `salt` - Salt value (optional, recommended)
+/// * `info` - Application-specific information (optional)
+/// * `output_length` - Output key length
 pub fn hkdf_sha384_derive(
     input_key_material: &[u8],
     salt: &[u8],

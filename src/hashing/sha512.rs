@@ -1,12 +1,12 @@
-// SHA-512 哈希算法实现
+// SHA-512 hash algorithm implementation
 
 use super::HashFunction;
 use std::ffi::c_void;
 
-/// SHA-512 输出大小
+/// SHA-512 output size
 pub const SHA512_OUTPUT_SIZE: usize = 64;
 
-// SHA512 Swift FFI 声明
+// SHA512 Swift FFI declarations
 unsafe extern "C" {
     #[link_name = "sha512_hash"]
     fn swift_sha512_hash(data: *const u8, length: i32, out_hash: *mut u8);
@@ -24,20 +24,20 @@ unsafe extern "C" {
     fn swift_sha512_free(ptr: *mut c_void);
 }
 
-/// SHA512 一次性哈希计算
+/// SHA512 one-shot hash computation
 pub fn sha512_hash(data: &[u8]) -> [u8; 64] {
     let mut output = [0u8; 64];
     sha512_hash_to(data, &mut output);
     output
 }
 
-/// SHA512 哈希计算到提供的缓冲区（零分配）
+/// SHA512 hash computation to provided buffer (zero allocation)
 ///
-/// # 参数
-/// - `output`: 必须至少有 64 字节
+/// # Arguments
+/// - `output`: must be at least 64 bytes
 ///
 /// # Panics
-/// 如果 output 缓冲区太小会 panic
+/// Panics if output buffer is too small
 pub fn sha512_hash_to(data: &[u8], output: &mut [u8]) {
     assert!(
         output.len() >= SHA512_OUTPUT_SIZE,
@@ -50,26 +50,26 @@ pub fn sha512_hash_to(data: &[u8], output: &mut [u8]) {
     }
 }
 
-/// SHA512 流式哈希状态
+/// SHA512 streaming hash state
 pub struct Sha512 {
     ptr: *mut c_void,
 }
 
 impl Sha512 {
-    /// 创建新的SHA512哈希状态
+    /// Create a new SHA512 hash state
     pub fn new() -> Self {
         let ptr = unsafe { swift_sha512_init() };
         Self { ptr }
     }
 
-    /// 更新哈希状态
+    /// Update hash state
     pub fn update(&mut self, data: &[u8]) {
         unsafe {
             swift_sha512_update(self.ptr, data.as_ptr(), data.len() as i32);
         }
     }
 
-    /// 完成哈希计算并返回结果
+    /// Finalize hash computation and return result
     pub fn finalize(self) -> [u8; 64] {
         let mut hash = [0u8; 64];
         unsafe {
@@ -93,7 +93,7 @@ impl Drop for Sha512 {
     }
 }
 
-/// SHA512 哈希算法实现
+/// SHA512 hash algorithm implementation
 pub struct SHA512;
 
 impl HashFunction for SHA512 {

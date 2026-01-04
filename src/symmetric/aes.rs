@@ -1,7 +1,7 @@
 use crate::error::{CryptoKitError, Result};
 use crate::symmetric::AuthenticatedCipher;
 
-// AES-GCM Swift FFI 声明
+// AES-GCM Swift FFI declarations
 unsafe extern "C" {
     #[link_name = "aes_gcm_encrypt"]
     fn swift_aes_gcm_encrypt(
@@ -62,14 +62,14 @@ unsafe extern "C" {
     fn swift_generate_aes_gcm_nonce(nonce_data: *mut u8) -> i32;
 }
 
-/// AES密钥
+/// AES key
 #[derive(Clone)]
 pub struct AESKey {
     pub(crate) bytes: Vec<u8>,
 }
 
 impl AESKey {
-    /// 从字节数组创建AES密钥
+    /// Create AES key from byte array
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         match bytes.len() {
             16 | 24 | 32 => Ok(Self {
@@ -79,7 +79,7 @@ impl AESKey {
         }
     }
 
-    /// 生成随机AES密钥
+    /// Generate random AES key
     pub fn generate(size: AESKeySize) -> Result<Self> {
         let len = match size {
             AESKeySize::AES128 => 16,
@@ -90,7 +90,7 @@ impl AESKey {
         unsafe {
             let mut bytes = vec![0u8; len];
             let result = swift_generate_symmetric_key(
-                (len * 8) as i32, // 位数
+                (len * 8) as i32, // bits
                 bytes.as_mut_ptr(),
             );
 
@@ -103,7 +103,7 @@ impl AESKey {
     }
 }
 
-/// AES密钥大小
+/// AES key size
 #[derive(Debug, Clone, Copy)]
 pub enum AESKeySize {
     AES128,
@@ -118,7 +118,7 @@ pub struct AESGCMNonce {
 }
 
 impl AESGCMNonce {
-    /// 从字节数组创建nonce
+    /// Create nonce from byte array
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != 12 {
             return Err(CryptoKitError::InvalidNonce);
@@ -129,7 +129,7 @@ impl AESGCMNonce {
         Ok(Self { bytes: nonce_bytes })
     }
 
-    /// 生成随机nonce
+    /// Generate random nonce
     pub fn generate() -> Result<Self> {
         unsafe {
             let mut bytes = [0u8; 12];
@@ -144,14 +144,14 @@ impl AESGCMNonce {
     }
 }
 
-/// AES-GCM 认证加密实现
+/// AES-GCM authenticated encryption implementation
 pub struct AesGcm;
 
 impl AuthenticatedCipher for AesGcm {
     type Key = AESKey;
     type Nonce = AESGCMNonce;
 
-    /// AES-GCM 认证标签大小为 16 字节
+    /// AES-GCM authentication tag size is 16 bytes
     const TAG_SIZE: usize = 16;
 
     fn seal_to(
@@ -310,7 +310,7 @@ impl AuthenticatedCipher for AesGcm {
     }
 }
 
-/// 便利函数：AES-GCM 加密
+/// Convenience function: AES-GCM encryption
 pub fn aes_gcm_encrypt(key: &[u8], nonce: &[u8], plaintext: &[u8]) -> Result<Vec<u8>> {
     let key = AESKey::from_bytes(key)?;
     let nonce = AESGCMNonce::from_bytes(nonce)?;
@@ -327,7 +327,7 @@ pub fn aes_gcm_encrypt_to(
     AesGcm::seal_to(&key, &nonce, plaintext, ciphertext)
 }
 
-/// 便利函数：AES-GCM 解密
+/// Convenience function: AES-GCM decryption
 pub fn aes_gcm_decrypt(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
     let key = AESKey::from_bytes(key)?;
     let nonce = AESGCMNonce::from_bytes(nonce)?;
@@ -344,7 +344,7 @@ pub fn aes_gcm_decrypt_to(
     AesGcm::open_to(&key, &nonce, ciphertext, plaintext)
 }
 
-/// 便利函数：AES-GCM 带AAD加密
+/// Convenience function: AES-GCM encryption with AAD
 pub fn aes_gcm_encrypt_with_aad(
     key: &[u8],
     nonce: &[u8],
@@ -367,7 +367,7 @@ pub fn aes_gcm_encrypt_to_with_aad(
     AesGcm::seal_to_with_aad(&key, &nonce, plaintext, aad, ciphertext)
 }
 
-/// 便利函数：AES-GCM 带AAD解密
+/// Convenience function: AES-GCM decryption with AAD
 pub fn aes_gcm_decrypt_with_aad(
     key: &[u8],
     nonce: &[u8],

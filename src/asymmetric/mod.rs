@@ -5,19 +5,19 @@ pub mod p256;
 pub mod p384;
 pub mod p521;
 
-/// 数字签名算法的通用trait
+/// Generic trait for digital signature algorithms
 pub trait SignatureAlgorithm {
     type PrivateKey;
     type PublicKey;
     type Signature;
 
-    /// 生成密钥对
+    /// Generate key pair
     fn generate_key_pair() -> Result<(Self::PrivateKey, Self::PublicKey)>;
 
-    /// 签名数据
+    /// Sign data
     fn sign(private_key: &Self::PrivateKey, data: &[u8]) -> Result<Self::Signature>;
 
-    /// 验证签名
+    /// Verify signature
     fn verify(
         public_key: &Self::PublicKey,
         signature: &Self::Signature,
@@ -25,23 +25,23 @@ pub trait SignatureAlgorithm {
     ) -> Result<bool>;
 }
 
-/// 密钥交换算法的通用trait
+/// Generic trait for key agreement algorithms
 pub trait KeyAgreement {
     type PrivateKey;
     type PublicKey;
     type SharedSecret;
 
-    /// 生成密钥对
+    /// Generate key pair
     fn generate_key_pair() -> Result<(Self::PrivateKey, Self::PublicKey)>;
 
-    /// 执行密钥交换
+    /// Perform key agreement
     fn key_agreement(
         private_key: &Self::PrivateKey,
         public_key: &Self::PublicKey,
     ) -> Result<Self::SharedSecret>;
 }
 
-/// 公钥算法的通用trait，组合签名和密钥交换
+/// Generic trait for public key algorithms, combining signature and key agreement
 pub trait PublicKeyAlgorithm: SignatureAlgorithm + KeyAgreement {}
 
 // Re-export commonly used types

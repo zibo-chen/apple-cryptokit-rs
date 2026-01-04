@@ -1,34 +1,34 @@
 use crate::error::{CryptoKitError, Result};
 
-/// HMAC 算法trait，为不同HMAC算法提供统一接口
+/// HMAC algorithm trait providing a unified interface for different HMAC algorithms
 pub trait HMAC {
-    /// HMAC 输出大小（字节）
+    /// HMAC output size (bytes)
     const OUTPUT_SIZE: usize;
 
-    /// 计算HMAC
+    /// Calculate HMAC
     fn authenticate(key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
         let mut output = vec![0u8; Self::OUTPUT_SIZE];
         Self::authenticate_to(key, data, &mut output)?;
         Ok(output)
     }
 
-    /// 计算HMAC到提供的缓冲区（零分配）
+    /// Calculate HMAC to the provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `output`: 必须至少有 `OUTPUT_SIZE` 字节
+    /// # Parameters
+    /// - `output`: Must be at least `OUTPUT_SIZE` bytes
     ///
-    /// # 返回
-    /// - `Ok(())`: 成功
-    /// - `Err`: 认证失败
+    /// # Returns
+    /// - `Ok(())`: Success
+    /// - `Err`: Authentication failed
     fn authenticate_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()>;
 
-    /// 获取输出大小（弃用，使用 OUTPUT_SIZE 常量）
+    /// Get output size (deprecated, use OUTPUT_SIZE constant instead)
     fn output_size() -> usize {
         Self::OUTPUT_SIZE
     }
 }
 
-/// 消息认证码验证
+/// Message authentication code verification
 pub fn verify_hmac<T: AsRef<[u8]>>(expected: T, computed: T) -> bool {
     let expected_bytes = expected.as_ref();
     let computed_bytes = computed.as_ref();
@@ -37,11 +37,11 @@ pub fn verify_hmac<T: AsRef<[u8]>>(expected: T, computed: T) -> bool {
         return false;
     }
 
-    // 使用常量时间比较防止时序攻击
+    // Use constant-time comparison to prevent timing attacks
     constant_time_eq(expected_bytes, computed_bytes)
 }
 
-/// 常量时间字节比较
+/// Constant-time byte comparison
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     if a.len() != b.len() {
         return false;
@@ -54,10 +54,10 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     result == 0
 }
 
-/// HMAC 算法枚举
+/// HMAC algorithm enumeration
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum HmacAlgorithm {
-    /// SHA-1 (不安全，仅用于兼容性)
+    /// SHA-1 (insecure, for compatibility only)
     Sha1,
     /// SHA-256
     Sha256,
@@ -68,7 +68,7 @@ pub enum HmacAlgorithm {
 }
 
 impl HmacAlgorithm {
-    /// 获取输出长度
+    /// Get output length
     pub fn output_size(&self) -> usize {
         match self {
             HmacAlgorithm::Sha1 => 20,
@@ -78,17 +78,17 @@ impl HmacAlgorithm {
         }
     }
 
-    /// 计算HMAC
+    /// Calculate HMAC
     pub fn compute(&self, key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
         let mut output = vec![0u8; self.output_size()];
         self.compute_to(key, data, &mut output)?;
         Ok(output)
     }
 
-    /// 计算HMAC到提供的缓冲区（零分配）
+    /// Calculate HMAC to the provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `output`: 必须至少有 `output_size()` 字节
+    /// # Parameters
+    /// - `output`: Must be at least `output_size()` bytes
     pub fn compute_to(&self, key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
         assert!(
             output.len() >= self.output_size(),
@@ -116,21 +116,21 @@ impl HmacAlgorithm {
         }
     }
 
-    /// 验证HMAC
+    /// Verify HMAC
     pub fn verify(&self, key: &[u8], data: &[u8], expected_hmac: &[u8]) -> Result<bool> {
         let computed = self.compute(key, data)?;
         Ok(constant_time_eq(&computed, expected_hmac))
     }
 }
 
-/// HMAC 构建器
+/// HMAC builder
 pub struct HmacBuilder {
     algorithm: HmacAlgorithm,
     key: Vec<u8>,
 }
 
 impl HmacBuilder {
-    /// 创建新的HMAC构建器
+    /// Create a new HMAC builder
     pub fn new(algorithm: HmacAlgorithm) -> Self {
         Self {
             algorithm,
@@ -138,13 +138,13 @@ impl HmacBuilder {
         }
     }
 
-    /// 设置密钥
+    /// Set the key
     pub fn key(mut self, key: &[u8]) -> Self {
         self.key = key.to_vec();
         self
     }
 
-    /// 计算HMAC
+    /// Calculate HMAC
     pub fn compute(&self, data: &[u8]) -> Result<Vec<u8>> {
         if self.key.is_empty() {
             return Err(CryptoKitError::InvalidKey);
@@ -152,7 +152,7 @@ impl HmacBuilder {
         self.algorithm.compute(&self.key, data)
     }
 
-    /// 计算HMAC到提供的缓冲区（零分配）
+    /// Calculate HMAC to the provided buffer (zero-allocation)
     pub fn compute_to(&self, data: &[u8], output: &mut [u8]) -> Result<()> {
         if self.key.is_empty() {
             return Err(CryptoKitError::InvalidKey);
@@ -160,13 +160,13 @@ impl HmacBuilder {
         self.algorithm.compute_to(&self.key, data, output)
     }
 
-    /// 验证HMAC
+    /// Verify HMAC
     pub fn verify(&self, data: &[u8], expected_hmac: &[u8]) -> Result<bool> {
         let computed = self.compute(data)?;
         Ok(constant_time_eq(&computed, expected_hmac))
     }
 
-    /// 获取输出大小
+    /// Get output size
     pub fn output_size(&self) -> usize {
         self.algorithm.output_size()
     }

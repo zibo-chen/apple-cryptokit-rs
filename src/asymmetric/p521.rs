@@ -1,9 +1,9 @@
-// P-521 椭圆曲线实现
+// P-521 elliptic curve implementation
 
 use crate::asymmetric::{KeyAgreement, SignatureAlgorithm};
 use crate::error::{CryptoKitError, Result};
 
-// P-521 相关的 Swift FFI 声明
+// P-521 related Swift FFI declarations
 unsafe extern "C" {
     fn swift_p521_generate_keypair(private_key: *mut u8, public_key: *mut u8) -> i32;
     fn swift_p521_sign(
@@ -25,25 +25,25 @@ unsafe extern "C" {
     ) -> i32;
 }
 
-/// P-521 私钥 (66 bytes)
+/// P-521 private key (66 bytes)
 #[derive(Clone)]
 pub struct P521PrivateKey {
     data: [u8; 66],
 }
 
-/// P-521 公钥 (132 bytes)
+/// P-521 public key (132 bytes)
 #[derive(Clone)]
 pub struct P521PublicKey {
     data: [u8; 132],
 }
 
-/// P-521 签名 (132 bytes)
+/// P-521 signature (132 bytes)
 #[derive(Clone)]
 pub struct P521Signature {
     data: [u8; 132],
 }
 
-/// P-521 共享密钥 (66 bytes)
+/// P-521 shared secret (66 bytes)
 #[derive(Clone)]
 pub struct P521SharedSecret {
     data: [u8; 66],
@@ -89,7 +89,7 @@ impl P521SharedSecret {
     }
 }
 
-/// P-521 椭圆曲线数字签名算法
+/// P-521 elliptic curve digital signature algorithm
 pub struct P521;
 
 impl SignatureAlgorithm for P521 {
@@ -188,7 +188,7 @@ impl KeyAgreement for P521 {
     }
 }
 
-// 便利函数
+// Convenience functions
 pub fn generate_keypair() -> Result<(P521PrivateKey, P521PublicKey)> {
     <P521 as SignatureAlgorithm>::generate_key_pair()
 }

@@ -1,38 +1,38 @@
-// 模块声明
+// Module declarations
 pub mod sha1;
 pub mod sha256;
 pub mod sha384;
 pub mod sha512;
 
-// 重新导出主要类型和函数
+// Re-export main types and functions
 pub use sha1::{sha1_hash, sha1_hash_to, SHA1};
 pub use sha256::{sha256_hash, sha256_hash_to, Sha256, SHA256};
 pub use sha384::{sha384_hash, sha384_hash_to, Sha384, SHA384};
 pub use sha512::{sha512_hash, sha512_hash_to, Sha512, SHA512};
 
-/// 哈希算法trait，为不同哈希算法提供统一接口
+/// Hash algorithm trait providing a unified interface for different hash algorithms
 pub trait HashFunction {
-    /// 哈希输出大小（字节）
+    /// Hash output size (in bytes)
     const OUTPUT_SIZE: usize;
 
-    /// 一次性计算哈希
+    /// Compute hash in one operation
     fn hash(data: &[u8]) -> Vec<u8> {
         let mut output = vec![0u8; Self::OUTPUT_SIZE];
         Self::hash_to(data, &mut output);
         output
     }
 
-    /// 计算哈希到提供的缓冲区（零分配）
+    /// Compute hash to provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `output`: 必须至少有 `OUTPUT_SIZE` 字节
+    /// # Parameters
+    /// - `output`: Must be at least `OUTPUT_SIZE` bytes
     ///
     /// # Panics
-    /// 如果 output 缓冲区太小会 panic
+    /// Panics if output buffer is too small
     fn hash_to(data: &[u8], output: &mut [u8]);
 }
 
-/// 哈希算法枚举，支持动态选择
+/// Hash algorithm enumeration, supporting dynamic selection
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HashAlgorithm {
     Sha1,
@@ -42,7 +42,7 @@ pub enum HashAlgorithm {
 }
 
 impl HashAlgorithm {
-    /// 获取哈希算法的输出长度
+    /// Get the output length of the hash algorithm
     pub fn output_size(&self) -> usize {
         match self {
             HashAlgorithm::Sha1 => 20,
@@ -52,7 +52,7 @@ impl HashAlgorithm {
         }
     }
 
-    /// 计算哈希
+    /// Compute hash
     pub fn compute(&self, data: &[u8]) -> Vec<u8> {
         match self {
             HashAlgorithm::Sha1 => sha1_hash(data).to_vec(),
@@ -62,13 +62,13 @@ impl HashAlgorithm {
         }
     }
 
-    /// 计算哈希到提供的缓冲区（零分配）
+    /// Compute hash to provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `output`: 必须至少有 `output_size()` 字节
+    /// # Parameters
+    /// - `output`: Must be at least `output_size()` bytes
     ///
     /// # Panics
-    /// 如果 output 缓冲区太小会 panic
+    /// Panics if output buffer is too small
     pub fn compute_to(&self, data: &[u8], output: &mut [u8]) {
         assert!(
             output.len() >= self.output_size(),
@@ -85,28 +85,28 @@ impl HashAlgorithm {
     }
 }
 
-/// 通用哈希构建器
+/// Generic hash builder
 pub struct HashBuilder {
     algorithm: HashAlgorithm,
 }
 
 impl HashBuilder {
-    /// 创建新的哈希构建器
+    /// Create a new hash builder
     pub fn new(algorithm: HashAlgorithm) -> Self {
         Self { algorithm }
     }
 
-    /// 计算哈希
+    /// Compute hash
     pub fn compute(&self, data: &[u8]) -> Vec<u8> {
         self.algorithm.compute(data)
     }
 
-    /// 计算哈希到提供的缓冲区（零分配）
+    /// Compute hash to provided buffer (zero-allocation)
     pub fn compute_to(&self, data: &[u8], output: &mut [u8]) {
         self.algorithm.compute_to(data, output)
     }
 
-    /// 获取输出大小
+    /// Get output size
     pub fn output_size(&self) -> usize {
         self.algorithm.output_size()
     }

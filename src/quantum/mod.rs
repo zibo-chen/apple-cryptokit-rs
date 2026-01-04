@@ -1,20 +1,20 @@
-//! # 量子安全密码学
+//! # Quantum-Safe Cryptography
 //!
-//! 本模块提供抗量子攻击的密码学算法，包括：
-//! - ML-KEM (Module Lattice Key Encapsulation Mechanism) - 量子安全的密钥封装机制
-//! - X-Wing - 结合ML-KEM768和X25519的混合KEM
-//! - ML-DSA (Module Lattice Digital Signature Algorithm) - 量子安全的数字签名算法
+//! This module provides quantum-resistant cryptographic algorithms, including:
+//! - ML-KEM (Module Lattice Key Encapsulation Mechanism) - Quantum-safe key encapsulation mechanism
+//! - X-Wing - Hybrid KEM combining ML-KEM768 and X25519
+//! - ML-DSA (Module Lattice Digital Signature Algorithm) - Quantum-safe digital signature algorithm
 //!
-//! 这些算法能够抵御量子计算机的攻击，为未来的安全需求提供保障。
+//! These algorithms can withstand attacks from quantum computers, providing security for future needs.
 //!
-//! ## 示例
+//! ## Example
 //!
 //! ```rust,no_run
 //! use apple_cryptokit::quantum::{MLKem768, XWingMLKem768X25519, KeyEncapsulationMechanism, KEMPrivateKey, KEMPublicKey};
 //! use apple_cryptokit::Result;
 //!
 //! # fn main() -> Result<()> {
-//! // 使用ML-KEM768进行密钥封装
+//! // Use ML-KEM768 for key encapsulation
 //! let private_key = MLKem768::generate_private_key()?;
 //! let public_key = private_key.public_key();
 //!
@@ -22,7 +22,7 @@
 //! let decapsulated_secret = private_key.decapsulate(&ciphertext)?;
 //! assert_eq!(shared_secret, decapsulated_secret);
 //!
-//! // 使用X-Wing混合KEM
+//! // Use X-Wing hybrid KEM
 //! let xwing_private = XWingMLKem768X25519::generate_private_key()?;
 //! let xwing_public = xwing_private.public_key();
 //!
@@ -36,10 +36,10 @@
 pub mod kem;
 pub mod signature;
 
-// 重新导出主要类型
+// Re-export main types
 pub use kem::{
-    KEMPrivateKey, KEMPublicKey, KeyEncapsulationMechanism, MLKem768, MLKem768PrivateKey,
-    MLKem768PublicKey, MLKem1024, MLKem1024PrivateKey, MLKem1024PublicKey, XWingMLKem768X25519,
+    KEMPrivateKey, KEMPublicKey, KeyEncapsulationMechanism, MLKem1024, MLKem1024PrivateKey,
+    MLKem1024PublicKey, MLKem768, MLKem768PrivateKey, MLKem768PublicKey, XWingMLKem768X25519,
     XWingMLKem768X25519PrivateKey, XWingMLKem768X25519PublicKey,
 };
 
@@ -48,15 +48,15 @@ pub use signature::{
     MLDsa87PrivateKey, MLDsa87PublicKey, SignaturePrivateKey, SignaturePublicKey,
 };
 
-/// 量子安全算法的通用特征
+/// Generic trait for quantum-safe algorithms
 pub trait QuantumSafe {
-    /// 算法名称
+    /// Algorithm name
     fn algorithm_name() -> &'static str;
 
-    /// 安全级别（NIST级别）
+    /// Security level (NIST level)
     fn security_level() -> u8;
 
-    /// 是否为后量子安全算法
+    /// Whether this is a post-quantum safe algorithm
     fn is_post_quantum() -> bool {
         true
     }
@@ -75,7 +75,7 @@ mod tests {
         let shared_secret2 = private_key.decapsulate(&ciphertext).unwrap();
 
         assert_eq!(shared_secret1, shared_secret2);
-        assert_eq!(shared_secret1.len(), 32); // ML-KEM768 产生32字节的共享密钥
+        assert_eq!(shared_secret1.len(), 32); // ML-KEM768 produces 32-byte shared secret
     }
 
     #[test]
@@ -87,7 +87,7 @@ mod tests {
         let shared_secret2 = private_key.decapsulate(&ciphertext).unwrap();
 
         assert_eq!(shared_secret1, shared_secret2);
-        assert_eq!(shared_secret1.len(), 32); // ML-KEM1024 也产生32字节的共享密钥
+        assert_eq!(shared_secret1.len(), 32); // ML-KEM1024 also produces 32-byte shared secret
     }
 
     #[test]
@@ -99,7 +99,7 @@ mod tests {
         let shared_secret2 = private_key.decapsulate(&ciphertext).unwrap();
 
         assert_eq!(shared_secret1, shared_secret2);
-        assert_eq!(shared_secret1.len(), 32); // X-Wing 产生32字节的共享密钥
+        assert_eq!(shared_secret1.len(), 32); // X-Wing produces 32-byte shared secret
     }
 
     #[test]
@@ -112,7 +112,7 @@ mod tests {
 
         assert!(public_key.verify(message, &signature).unwrap());
 
-        // 验证错误的消息应该失败
+        // Verifying wrong message should fail
         let wrong_message = b"Wrong message";
         assert!(!public_key.verify(wrong_message, &signature).unwrap());
     }
@@ -127,7 +127,7 @@ mod tests {
 
         assert!(public_key.verify(message, &signature).unwrap());
 
-        // 验证错误的消息应该失败
+        // Verifying wrong message should fail
         let wrong_message = b"Wrong message";
         assert!(!public_key.verify(wrong_message, &signature).unwrap());
     }

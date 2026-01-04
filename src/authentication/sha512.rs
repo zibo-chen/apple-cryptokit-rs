@@ -1,7 +1,7 @@
 use crate::authentication::hmac::HMAC;
 use crate::error::{CryptoKitError, Result};
 
-// HMAC-SHA512 Swift FFI 声明
+// HMAC-SHA512 Swift FFI declarations
 unsafe extern "C" {
     #[link_name = "hmac_sha512"]
     fn swift_hmac_sha512(
@@ -13,20 +13,20 @@ unsafe extern "C" {
     ) -> i32;
 }
 
-/// HMAC-SHA512 输出大小
+/// HMAC-SHA512 output size
 pub const HMAC_SHA512_OUTPUT_SIZE: usize = 64;
 
-/// HMAC-SHA512 消息认证码
+/// HMAC-SHA512 message authentication code
 pub fn hmac_sha512(key: &[u8], data: &[u8]) -> Result<[u8; HMAC_SHA512_OUTPUT_SIZE]> {
     let mut output = [0u8; HMAC_SHA512_OUTPUT_SIZE];
     hmac_sha512_to(key, data, &mut output)?;
     Ok(output)
 }
 
-/// HMAC-SHA512 消息认证码到提供的缓冲区（零分配）
+/// HMAC-SHA512 message authentication code to provided buffer (zero-allocation)
 ///
-/// # 参数
-/// - `output`: 必须至少有 64 字节
+/// # Parameters
+/// - `output`: Must be at least 64 bytes
 pub fn hmac_sha512_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> {
     assert!(
         output.len() >= HMAC_SHA512_OUTPUT_SIZE,
@@ -51,7 +51,7 @@ pub fn hmac_sha512_to(key: &[u8], data: &[u8], output: &mut [u8]) -> Result<()> 
     }
 }
 
-/// HMAC-SHA512 实现
+/// HMAC-SHA512 implementation
 pub struct HmacSha512;
 
 impl HMAC for HmacSha512 {
@@ -63,7 +63,7 @@ impl HMAC for HmacSha512 {
 }
 
 impl HmacSha512 {
-    /// 验证HMAC-SHA512
+    /// Verify HMAC-SHA512
     pub fn verify(key: &[u8], data: &[u8], expected: &[u8]) -> Result<bool> {
         let computed = Self::authenticate(key, data)?;
         Ok(super::hmac::constant_time_eq(&computed, expected))
@@ -109,7 +109,7 @@ mod tests {
         assert!(verify_result.is_ok());
         assert!(verify_result.unwrap());
 
-        // 测试错误的HMAC
+        // Test wrong HMAC
         let wrong_hmac = [0u8; HMAC_SHA512_OUTPUT_SIZE];
         let verify_wrong = HmacSha512::verify(key, data, &wrong_hmac);
         assert!(verify_wrong.is_ok());
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_hmac_sha512_large_data() {
         let key = b"large_data_key";
-        let data = vec![0u8; 10000]; // 10KB数据
+        let data = vec![0u8; 10000]; // 10KB data
 
         let result = hmac_sha512(key, &data);
         assert!(result.is_ok());

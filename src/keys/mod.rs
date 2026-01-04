@@ -1,10 +1,10 @@
 pub mod shared_secret;
-/// 密钥管理模块
+/// Key management module
 ///
-/// 该模块提供各种密码学密钥的管理功能，包括：
-/// - 对称密钥 (SymmetricKey)
-/// - 共享密钥 (SharedSecret)
-/// - 密钥派生功能
+/// This module provides management functions for various cryptographic keys, including:
+/// - Symmetric keys (SymmetricKey)
+/// - Shared secrets (SharedSecret)
+/// - Key derivation functions
 pub mod symmetric;
 
 // Re-export commonly used types

@@ -3,25 +3,25 @@ use crate::error::Result;
 pub mod aes;
 pub mod chacha;
 
-/// 加密算法的通用trait
+/// Generic trait for cipher algorithms
 pub trait Cipher {
     type Key;
     type Nonce;
 
-    /// 认证标签大小（字节）
+    /// Authentication tag size (bytes)
     const TAG_SIZE: usize;
 
-    /// 计算加密后的输出大小
+    /// Calculate encrypted output size
     fn encrypted_size(plaintext_len: usize) -> usize {
         plaintext_len + Self::TAG_SIZE
     }
 
-    /// 计算解密后的输出大小
+    /// Calculate decrypted output size
     fn decrypted_size(ciphertext_len: usize) -> Option<usize> {
         ciphertext_len.checked_sub(Self::TAG_SIZE)
     }
 
-    /// 加密数据
+    /// Encrypt data
     fn encrypt(key: &Self::Key, nonce: &Self::Nonce, plaintext: &[u8]) -> Result<Vec<u8>> {
         let mut ciphertext = vec![0u8; Self::encrypted_size(plaintext.len())];
         let len = Self::encrypt_to(key, nonce, plaintext, &mut ciphertext)?;
@@ -29,13 +29,13 @@ pub trait Cipher {
         Ok(ciphertext)
     }
 
-    /// 加密数据到提供的缓冲区（零分配）
+    /// Encrypt data to provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `output`: 必须至少有 `plaintext.len() + TAG_SIZE` 字节
+    /// # Parameters
+    /// - `output`: Must be at least `plaintext.len() + TAG_SIZE` bytes
     ///
-    /// # 返回
-    /// - `Ok(usize)`: 写入的字节数
+    /// # Returns
+    /// - `Ok(usize)`: Bytes written
     fn encrypt_to(
         key: &Self::Key,
         nonce: &Self::Nonce,
@@ -43,7 +43,7 @@ pub trait Cipher {
         ciphertext: &mut [u8],
     ) -> Result<usize>;
 
-    /// 解密数据
+    /// Decrypt data
     fn decrypt(key: &Self::Key, nonce: &Self::Nonce, ciphertext: &[u8]) -> Result<Vec<u8>> {
         let mut plaintext = vec![0u8; ciphertext.len()];
         let len = Self::decrypt_to(key, nonce, ciphertext, &mut plaintext)?;
@@ -51,13 +51,13 @@ pub trait Cipher {
         Ok(plaintext)
     }
 
-    /// 解密数据到提供的缓冲区（零分配）
+    /// Decrypt data to provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `output`: 必须至少有 `ciphertext.len() - TAG_SIZE` 字节
+    /// # Parameters
+    /// - `output`: Must be at least `ciphertext.len() - TAG_SIZE` bytes
     ///
-    /// # 返回
-    /// - `Ok(usize)`: 写入的字节数
+    /// # Returns
+    /// - `Ok(usize)`: Bytes written
     fn decrypt_to(
         key: &Self::Key,
         nonce: &Self::Nonce,
@@ -66,25 +66,25 @@ pub trait Cipher {
     ) -> Result<usize>;
 }
 
-/// 认证加密算法的trait (AEAD - Authenticated Encryption with Associated Data)
+/// Trait for authenticated encryption algorithms (AEAD - Authenticated Encryption with Associated Data)
 pub trait AuthenticatedCipher {
     type Key;
     type Nonce;
 
-    /// 认证标签大小（字节）
+    /// Authentication tag size (bytes)
     const TAG_SIZE: usize;
 
-    /// 计算加密后的输出大小
+    /// Calculate sealed output size
     fn sealed_size(plaintext_len: usize) -> usize {
         plaintext_len + Self::TAG_SIZE
     }
 
-    /// 计算解密后的输出大小
+    /// Calculate opened output size
     fn opened_size(ciphertext_len: usize) -> Option<usize> {
         ciphertext_len.checked_sub(Self::TAG_SIZE)
     }
 
-    /// 加密并认证数据
+    /// Encrypt and authenticate data
     fn seal(key: &Self::Key, nonce: &Self::Nonce, plaintext: &[u8]) -> Result<Vec<u8>> {
         let mut ciphertext = vec![0u8; Self::sealed_size(plaintext.len())];
         let len = Self::seal_to(key, nonce, plaintext, &mut ciphertext)?;
@@ -92,13 +92,13 @@ pub trait AuthenticatedCipher {
         Ok(ciphertext)
     }
 
-    /// 加密并认证数据到提供的缓冲区（零分配）
+    /// Encrypt and authenticate data to provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `ciphertext`: 必须至少有 `plaintext.len() + TAG_SIZE` 字节
+    /// # Parameters
+    /// - `ciphertext`: Must be at least `plaintext.len() + TAG_SIZE` bytes
     ///
-    /// # 返回
-    /// - `Ok(usize)`: 写入的字节数（plaintext.len() + TAG_SIZE）
+    /// # Returns
+    /// - `Ok(usize)`: Bytes written (plaintext.len() + TAG_SIZE)
     fn seal_to(
         key: &Self::Key,
         nonce: &Self::Nonce,
@@ -106,7 +106,7 @@ pub trait AuthenticatedCipher {
         ciphertext: &mut [u8],
     ) -> Result<usize>;
 
-    /// 验证并解密数据
+    /// Verify and decrypt data
     fn open(key: &Self::Key, nonce: &Self::Nonce, ciphertext: &[u8]) -> Result<Vec<u8>> {
         let mut plaintext = vec![0u8; ciphertext.len()];
         let len = Self::open_to(key, nonce, ciphertext, &mut plaintext)?;
@@ -114,13 +114,13 @@ pub trait AuthenticatedCipher {
         Ok(plaintext)
     }
 
-    /// 验证并解密数据到提供的缓冲区（零分配）
+    /// Verify and decrypt data to provided buffer (zero-allocation)
     ///
-    /// # 参数
-    /// - `plaintext`: 必须至少有 `ciphertext.len() - TAG_SIZE` 字节
+    /// # Parameters
+    /// - `plaintext`: Must be at least `ciphertext.len() - TAG_SIZE` bytes
     ///
-    /// # 返回
-    /// - `Ok(usize)`: 写入的字节数（ciphertext.len() - TAG_SIZE）
+    /// # Returns
+    /// - `Ok(usize)`: Bytes written (ciphertext.len() - TAG_SIZE)
     fn open_to(
         key: &Self::Key,
         nonce: &Self::Nonce,
@@ -128,7 +128,7 @@ pub trait AuthenticatedCipher {
         plaintext: &mut [u8],
     ) -> Result<usize>;
 
-    /// 加密并认证数据，支持附加认证数据(AAD)
+    /// Encrypt and authenticate data with additional authenticated data (AAD)
     fn seal_with_aad(
         key: &Self::Key,
         nonce: &Self::Nonce,
@@ -141,13 +141,13 @@ pub trait AuthenticatedCipher {
         Ok(ciphertext)
     }
 
-    /// 加密并认证数据到提供的缓冲区，支持附加认证数据(AAD)（零分配）
+    /// Encrypt and authenticate data to provided buffer with additional authenticated data (AAD) (zero-allocation)
     ///
-    /// # 参数
-    /// - `ciphertext`: 必须至少有 `plaintext.len() + TAG_SIZE` 字节
+    /// # Parameters
+    /// - `ciphertext`: Must be at least `plaintext.len() + TAG_SIZE` bytes
     ///
-    /// # 返回
-    /// - `Ok(usize)`: 写入的字节数（plaintext.len() + TAG_SIZE）
+    /// # Returns
+    /// - `Ok(usize)`: Bytes written (plaintext.len() + TAG_SIZE)
     fn seal_to_with_aad(
         key: &Self::Key,
         nonce: &Self::Nonce,
@@ -156,7 +156,7 @@ pub trait AuthenticatedCipher {
         ciphertext: &mut [u8],
     ) -> Result<usize>;
 
-    /// 验证并解密数据，支持附加认证数据(AAD)
+    /// Verify and decrypt data with additional authenticated data (AAD)
     fn open_with_aad(
         key: &Self::Key,
         nonce: &Self::Nonce,
@@ -169,13 +169,13 @@ pub trait AuthenticatedCipher {
         Ok(plaintext)
     }
 
-    /// 验证并解密数据到提供的缓冲区，支持附加认证数据(AAD)（零分配）
+    /// Verify and decrypt data to provided buffer with additional authenticated data (AAD) (zero-allocation)
     ///
-    /// # 参数
-    /// - `plaintext`: 必须至少有 `ciphertext.len() - TAG_SIZE` 字节
+    /// # Parameters
+    /// - `plaintext`: Must be at least `ciphertext.len() - TAG_SIZE` bytes
     ///
-    /// # 返回
-    /// - `Ok(usize)`: 写入的字节数（ciphertext.len() - TAG_SIZE）
+    /// # Returns
+    /// - `Ok(usize)`: Bytes written (ciphertext.len() - TAG_SIZE)
     fn open_to_with_aad(
         key: &Self::Key,
         nonce: &Self::Nonce,

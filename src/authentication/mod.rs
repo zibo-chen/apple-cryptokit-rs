@@ -24,7 +24,7 @@ mod tests {
         let key = b"test_key";
         let data = b"test_message";
 
-        // 测试所有算法
+        // Test all algorithms
         let algorithms = [
             HmacAlgorithm::Sha1,
             HmacAlgorithm::Sha256,
@@ -39,7 +39,7 @@ mod tests {
             let hmac_result = result.unwrap();
             assert_eq!(hmac_result.len(), algorithm.output_size());
 
-            // 测试验证
+            // Test verification
             let verify_result = algorithm.verify(key, data, &hmac_result);
             assert!(verify_result.is_ok());
             assert!(verify_result.unwrap());
@@ -57,9 +57,9 @@ mod tests {
         assert!(result.is_ok());
 
         let hmac_result = result.unwrap();
-        assert_eq!(hmac_result.len(), 32); // SHA-256 输出长度
+        assert_eq!(hmac_result.len(), 32); // SHA-256 output length
 
-        // 测试验证
+        // Test verification
         let verify_result = builder.verify(data, &hmac_result);
         assert!(verify_result.is_ok());
         assert!(verify_result.unwrap());
@@ -73,7 +73,7 @@ mod tests {
 
         assert!(constant_time_eq(a, b));
         assert!(!constant_time_eq(a, c));
-        assert!(!constant_time_eq(a, b"hello world")); // 不同长度
+        assert!(!constant_time_eq(a, b"hello world")); // Different length
     }
 
     #[test]
@@ -91,7 +91,7 @@ mod tests {
         let key = b"interop_key";
         let data = b"interop_data";
 
-        // 使用不同方式计算相同算法的HMAC
+        // Compute HMAC using different methods for the same algorithm
         let direct_result = hmac_sha256(key, data).unwrap();
         let trait_result = HmacSha256::authenticate(key, data).unwrap();
         let enum_result = HmacAlgorithm::Sha256.compute(key, data).unwrap();
