@@ -4,6 +4,10 @@ use std::process::Command;
 
 const MACOS_TARGET_VERSION: &str = "15.0";
 const IOS_TARGET_VERSION: &str = "13.0";
+// Mac Catalyst did not exist before iOS 13.1, and Swift rejects an
+// earlier version outright: "invalid version number in '-target
+// <arch>-apple-ios13.0-macabi'".
+const CATALYST_TARGET_VERSION: &str = "13.1";
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
@@ -135,7 +139,7 @@ fn build_ios_cryptokit() {
         // Mac Catalyst
         match arch.as_str() {
             "aarch64" | "x86_64" => {
-                format!("{}-apple-ios{}-macabi", arch, IOS_TARGET_VERSION)
+                format!("{}-apple-ios{}-macabi", arch, CATALYST_TARGET_VERSION)
             }
             _ => panic!("Unsupported Mac Catalyst architecture: {}", arch),
         }
