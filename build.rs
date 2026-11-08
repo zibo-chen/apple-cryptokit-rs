@@ -80,6 +80,9 @@ fn build_mac_cryptokit() {
     if !Command::new("swift")
         .args(&[
             "build",
+            // Preserve the library layout and exported @_cdecl symbols on Swift 6.4.
+            "--build-system",
+            "native",
             "-c",
             &profile, // "--arch", &arch,
             "--triple",
