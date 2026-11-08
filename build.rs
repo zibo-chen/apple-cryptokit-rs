@@ -4,6 +4,10 @@ use std::process::Command;
 
 const MACOS_TARGET_VERSION: &str = "15.0";
 const IOS_TARGET_VERSION: &str = "13.0";
+// Mac Catalyst did not exist before iOS 13.1, and Swift rejects an
+// earlier version outright: "invalid version number in '-target
+// <arch>-apple-ios13.0-macabi'".
+const CATALYST_TARGET_VERSION: &str = "13.1";
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
@@ -114,15 +118,32 @@ fn build_ios_cryptokit() {
     let profile = env::var("PROFILE").unwrap();
     let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
     let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    let target_abi = env::var("CARGO_CFG_TARGET_ABI").unwrap_or_default();
     let target_triple = env::var("TARGET").unwrap_or_default();
 
     println!("cargo:warning=Target env: '{}'", target_env);
+    println!("cargo:warning=Target abi: '{}'", target_abi);
     println!("cargo:warning=Target triple: '{}'", target_triple);
     println!("cargo:warning=Arch: '{}'", arch);
 
-    // Determine iOS target based on architecture and environment
-    let is_simulator = target_env == "sim" || target_triple.contains("sim");
-    let target = if is_simulator {
+    // Mac Catalyst reports `target_os = "ios"` like a phone does, so it lands
+    // here — but it is neither a device nor the simulator. Building it as a
+    // device produced objects stamped with the iOS platform, which link into
+    // an iOS binary happily and make a macabi static library that
+    // `xcodebuild -create-xcframework` rejects outright:
+    // "binaries with multiple platforms are not supported".
+    let is_catalyst = target_abi == "macabi" || target_triple.contains("macabi");
+    let is_simulator =
+        !is_catalyst && (target_env == "sim" || target_triple.contains("sim"));
+    let target = if is_catalyst {
+        // Mac Catalyst
+        match arch.as_str() {
+            "aarch64" | "x86_64" => {
+                format!("{}-apple-ios{}-macabi", arch, CATALYST_TARGET_VERSION)
+            }
+            _ => panic!("Unsupported Mac Catalyst architecture: {}", arch),
+        }
+    } else if is_simulator {
         // iOS Simulator
         match arch.as_str() {
             "aarch64" => format!("{}-apple-ios{}-simulator", arch, IOS_TARGET_VERSION),
@@ -160,7 +181,10 @@ fn build_ios_cryptokit() {
     );
 
     // Get the appropriate SDK path
-    let sdk_name = if is_simulator {
+    // Catalyst builds against the macOS SDK, not either iPhone one.
+    let sdk_name = if is_catalyst {
+        "macosx"
+    } else if is_simulator {
         "iphonesimulator"
     } else {
         "iphoneos"
